@@ -1,0 +1,77 @@
+RewriteEngine On
+
+# Redirect root URL to public/index.php
+RewriteRule ^$ public/index.php [L]
+
+# Redirect /auth/sign-in to public/authentication/sign-in.php
+RewriteRule ^auth/sign-in$ public/authentication/sign-in.php [L]
+
+# Redirect /auth/sign-out to public/authentication/sign-out.php
+RewriteRule ^auth/sign-out$ public/authentication/sign-out.php [L]
+
+
+# Redirect /dashboard_message/add to public/staffs/add.php
+RewriteRule ^dashboard-message/add$ public/dashboard-message/add.php [L]
+
+# Redirect /users to public/users/list.php
+RewriteRule ^users$ public/users/list.php [L]
+
+# Redirect /staffs to public/staffs/list.php
+RewriteRule ^staffs$ public/staffs/list.php [L]
+
+# Redirect /staffs/add to public/staffs/add.php
+RewriteRule ^staffs/add$ public/staffs/add.php [L]
+
+# Redirect /manual-billing to public/manual-billing/add.php
+RewriteRule ^manual-billing$ public/manual-billing/add.php [L]
+
+
+# Redirect /discounts to public/discounts/list.php
+RewriteRule ^discounts$ public/discounts/list.php [L]
+
+# Redirect /discounts/add to public/discounts/add.php
+RewriteRule ^discounts/add$ public/discounts/add.php [L]
+
+# Redirect /subscription-histories to public/subscription-histories/list.php
+RewriteRule ^subscription-histories$ public/subscription-histories/list.php [L]
+
+# Redirect /subscription-plans to public/subscription-plans/list.php
+RewriteRule ^subscription-plans$ public/subscription-plans/list.php [L]
+
+# Redirect /subscription-plans/add to public/subscription-plans/add.php
+RewriteRule ^subscription-plans/add$ public/subscription-plans/add.php [L]
+
+# Redirect /subscription-plans/:id to public/subscription-plans/update.php
+RewriteRule ^subscription-plans/([0-9a-zA-Z_-]+)$ public/subscription-plans/update.php?id=$1 [L,QSA]
+
+# Redirect /users/:id to public/users/profile.php
+RewriteRule ^users/([0-9a-zA-Z_-]+)$ public/users/profile.php?id=$1 [L,QSA]
+
+# Redirect /settings to public/settings/settings.php
+RewriteRule ^settings$ public/settings/settings.php [L]
+
+# Redirect /settings/general to public/settings/general.php
+RewriteRule ^settings/general$ public/settings/general.php [L]
+
+# Redirect /settings/currencyto public/settings/currency.php
+RewriteRule ^settings/currency$ public/settings/currency.php [L]
+
+# Redirect /settings/taxesto public/settings/taxes.php
+RewriteRule ^settings/taxes$ public/settings/taxes.php [L]
+
+# Redirect /settings/paymentsto public/settings/payments.php
+RewriteRule ^settings/payments$ public/settings/payments.php [L]
+
+# Remove .php extension from URLs
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-zA-Z0-9_-]+)$ public/$1.php [L]
+
+# Rewrite /assets to /public/assets
+RewriteRule ^assets/(.*)$ public/assets/$1 [L]
+
+# Rewrite /ajax to /public/ajax
+RewriteRule ^ajax/(.*)$ public/ajax/$1 [L]
+
+
+

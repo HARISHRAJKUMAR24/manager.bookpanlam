@@ -1,0 +1,1259 @@
+Array
+(
+    [mihpayid] => 403993715536363656
+    [mode] => CC
+    [status] => success
+    [unmappedstatus] => captured
+    [key] => gtKFFx
+    [txnid] => TXN17697077179255
+    [amount] => 10.00
+    [cardCategory] => domestic
+    [discount] => 0.00
+    [net_amount_debit] => 10
+    [addedon] => 2026-01-29 22:58:38
+    [productinfo] => Booking Payment
+    [firstname] => Barani
+    [lastname] => 
+    [address1] => 
+    [address2] => 
+    [city] => 
+    [state] => 
+    [country] => 
+    [zipcode] => 
+    [email] => barani@gmail.com
+    [phone] => 918888888888
+    [udf1] => 85960HOS117snz
+    [udf2] => 774100
+    [udf3] => 85960
+    [udf4] => 2026-02-03
+    [udf5] => {"slot_from":"09:00","slot_to":"","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"2:0","receipt":"receipt_774100_1769707717","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"291","service_info":{"reference_
+    [udf6] => 
+    [udf7] => 
+    [udf8] => 
+    [udf9] => 
+    [udf10] => 
+    [hash] => 1dd04f7d2d6b05014afa7761cf4bcbd81d7ba7f28d01862b264a004507445e6783d72cce3318169f66aba123f3e0c1b710969ccf1cfe4ec88c79121f91660d64
+    [field1] => 404948397745233340
+    [field2] => 536270
+    [field3] => 10.00
+    [field4] => 
+    [field5] => 00
+    [field6] => 02
+    [field7] => AUTHPOSITIVE
+    [field8] => AUTHORIZED
+    [field9] => Transaction is Successful
+    [payment_source] => payu
+    [pa_name] => PayU
+    [PG_TYPE] => CC-PG
+    [bank_ref_num] => 404948397745233340
+    [bankcode] => CC
+    [error] => E000
+    [error_Message] => No Error
+    [cardnum] => XXXXXXXXXXXX2346
+)
+
+Array
+(
+    [mihpayid] => 403993715536363677
+    [mode] => CC
+    [status] => success
+    [unmappedstatus] => captured
+    [key] => gtKFFx
+    [txnid] => TXN17697081967939
+    [amount] => 10.00
+    [cardCategory] => domestic
+    [discount] => 0.00
+    [net_amount_debit] => 10
+    [addedon] => 2026-01-29 23:06:37
+    [productinfo] => Booking Payment
+    [firstname] => Barani
+    [lastname] => 
+    [address1] => 
+    [address2] => 
+    [city] => 
+    [state] => 
+    [country] => 
+    [zipcode] => 
+    [email] => barani@gmail.com
+    [phone] => 918888888888
+    [udf1] => 85960HOS1d1v33
+    [udf2] => 774100
+    [udf3] => 85960
+    [udf4] => 2026-02-02
+    [udf5] => {"slot_from":"22:00","slot_to":"00:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"1:0","receipt":"receipt_774100_1769708196","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"293","service_info":{"refer
+    [udf6] => 
+    [udf7] => 
+    [udf8] => 
+    [udf9] => 
+    [udf10] => 
+    [hash] => a9272fba825e92cbeb6fbec00a768ef1973edf6bee4f5d4cf56bb5100e0eb46035a59bc020c808d3feaef3621f339fc4d14d5c6e8d43b31ce90eba570e7e19b8
+    [field1] => 870895013483903100
+    [field2] => 325039
+    [field3] => 10.00
+    [field4] => 
+    [field5] => 00
+    [field6] => 02
+    [field7] => AUTHPOSITIVE
+    [field8] => AUTHORIZED
+    [field9] => Transaction is Successful
+    [payment_source] => payu
+    [pa_name] => PayU
+    [PG_TYPE] => CC-PG
+    [bank_ref_num] => 870895013483903100
+    [bankcode] => CC
+    [error] => E000
+    [error_Message] => No Error
+    [cardnum] => XXXXXXXXXXXX2346
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:41:09
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363684
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697084403127
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:10:41
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1p2n9f
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-02
+            [udf5] => {"slot_from":"22:00","slot_to":"00:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"1:0","receipt":"receipt_774100_1769708440","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"294","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 75963a9766a6b9ccd00aa382000aa7ecafb66335c3b991d258d9295eab6d582d14fbf485cc709df45d52e16832042b0a57fe4c08ffecc9aed1915b766a3831ff
+            [field1] => 987748587930478200
+            [field2] => 973305
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 987748587930478200
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:45:20
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363692
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697086908702
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:14:51
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS11i6q
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-02
+            [udf5] => {"slot_from":"22:00","slot_to":"00:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"1:0","receipt":"receipt_774100_1769708690","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"296","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => b44208d5f550caa014222a191c722feab1a9498aa23cbcf2d708ff3147950e1d185c4ef13d3eff337353521b3439a3ff04bbae3d074561687a99e4e166fcc0fa
+            [field1] => 339686553452275900
+            [field2] => 167858
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 339686553452275900
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:45:35
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363692
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697086908702
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:14:51
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS11i6q
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-02
+            [udf5] => {"slot_from":"22:00","slot_to":"00:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"1:0","receipt":"receipt_774100_1769708690","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"296","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => b44208d5f550caa014222a191c722feab1a9498aa23cbcf2d708ff3147950e1d185c4ef13d3eff337353521b3439a3ff04bbae3d074561687a99e4e166fcc0fa
+            [field1] => 339686553452275900
+            [field2] => 167858
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 339686553452275900
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:47:35
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363696
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697088076457
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:16:48
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1iwqd
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-02
+            [udf5] => {"slot_from":"22:00","slot_to":"00:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"1:0","receipt":"receipt_774100_1769708807","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"297","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => cd31a1b8c81919b5f6e3cb19f743e66b20b8af6419873c3708c3fc76391d72b5f85c5a356e643cd1540aece687d476a92b6d9bf2d40e9b8c0bcde9e23482da83
+            [field1] => 974203487331814400
+            [field2] => 743634
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 974203487331814400
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:47:50
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363696
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697088076457
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:16:48
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1iwqd
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-02
+            [udf5] => {"slot_from":"22:00","slot_to":"00:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"1:0","receipt":"receipt_774100_1769708807","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"297","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => cd31a1b8c81919b5f6e3cb19f743e66b20b8af6419873c3708c3fc76391d72b5f85c5a356e643cd1540aece687d476a92b6d9bf2d40e9b8c0bcde9e23482da83
+            [field1] => 974203487331814400
+            [field2] => 743634
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 974203487331814400
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:48:57
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363699
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697089052717
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:18:26
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1grtv
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-03
+            [udf5] => {"slot_from":"09:00","slot_to":"","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"2:0","receipt":"receipt_774100_1769708905","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"298","service_info":{"reference_
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 1f60807431dbbd4bd44008ee744b0cf4fb0480c70e5ac7386f0b1e3ecd4c483abd5989b3f38a559b0460970e8489f71cebdde39f8da4324a728e583999859aa6
+            [field1] => 710628801333366800
+            [field2] => 830135
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 710628801333366800
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:50:53
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363702
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697090219967
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:20:22
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS17nex
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-04
+            [udf5] => {"slot_from":"09:00","slot_to":"22:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"3:0","receipt":"receipt_774100_1769709021","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"299","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 3bb2f83a696f7cb362b2cd4ffb00c7fc6ffc4cf50d547a343ace4480f28d084b858e53274465b1198954268439d2332dd9012318b9302952a79ecb6994982e03
+            [field1] => 371553411443968900
+            [field2] => 174648
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 371553411443968900
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:51:23
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363702
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697090219967
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:20:22
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS17nex
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-04
+            [udf5] => {"slot_from":"09:00","slot_to":"22:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"3:0","receipt":"receipt_774100_1769709021","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"299","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 3bb2f83a696f7cb362b2cd4ffb00c7fc6ffc4cf50d547a343ace4480f28d084b858e53274465b1198954268439d2332dd9012318b9302952a79ecb6994982e03
+            [field1] => 371553411443968900
+            [field2] => 174648
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 371553411443968900
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:51:59
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363705
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697090896461
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:21:30
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1l8to2
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-04
+            [udf5] => {"slot_from":"09:00","slot_to":"22:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"3:0","receipt":"receipt_774100_1769709089","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"300","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 3a04439a3c8638b8cd49e249b2e463fbcd1c6663e70d8f3892195e80f2a557d95f72ba09d22aa42807c2bcfc2ac0c953197a50e91bf8b4bb8d0be26c895fef48
+            [field1] => 458830058056584000
+            [field2] => 583269
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 458830058056584000
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 18:52:07
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363705
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697090896461
+            [amount] => 10.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 10
+            [addedon] => 2026-01-29 23:21:30
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1l8to2
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-04
+            [udf5] => {"slot_from":"09:00","slot_to":"22:00","token_count":1,"category_id":"CAT_697b8979258e0","batch_id":"3:0","receipt":"receipt_774100_1769709089","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":10,"payment_id":"300","service_info":{"refer
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 3a04439a3c8638b8cd49e249b2e463fbcd1c6663e70d8f3892195e80f2a557d95f72ba09d22aa42807c2bcfc2ac0c953197a50e91bf8b4bb8d0be26c895fef48
+            [field1] => 458830058056584000
+            [field2] => 583269
+            [field3] => 10.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 458830058056584000
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-29 19:36:05
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536363785
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697117362031
+            [amount] => 5.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 5
+            [addedon] => 2026-01-30 00:05:37
+            [productinfo] => Booking Payment
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1satb6
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-04
+            [udf5] => {"slot_from":"18:00","slot_to":"21:00","token_count":1,"category_id":"CAT_69732006cc321","batch_id":"3:0","receipt":"receipt_774100_1769711736","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":5,"payment_id":"307","service_info":{"refere
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 61e2e6b58f21c57f2db859420a2d21a1e6bacc8adb114312ad4e9442d743a68531cd90023375700d8480264d27afe5aef08dd1fdef338bc97a9d8c9713a31073
+            [field1] => 905552963936683300
+            [field2] => 222188
+            [field3] => 5.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 905552963936683300
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+    [SESSION_data] => Not exists
+)
+
+Array
+(
+    [timestamp] => 2026-01-30 07:54:37
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536366411
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697554885349
+            [amount] => 300.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [additionalCharges] => 20.94
+            [net_amount_debit] => 320.94
+            [addedon] => 2026-01-30 12:14:49
+            [productinfo] => Booking Payment
+            [firstname] => Harish RAJKUMAR
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => harish@gmail.com
+            [phone] => 918015021359
+            [udf1] => 32128OTH39zw5m
+            [udf2] => 614049
+            [udf3] => 32128
+            [udf4] => 2026-02-01
+            [udf5] => {"slot_from":"09:00","slot_to":"17:00","token_count":1,"category_id":"DEPT_697c450c69c14","batch_id":"0:0","receipt":"receipt_614049_1769755488","gst_type":"inclusive","gst_percent":5,"gst_amount":0,"sub_total":300,"payment_id":"323","service_info":{"refe
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 559e53bf6ed47d77045662957e4fe932a3bd6534d2012bc8542ca4b1f62d6c8400b1f77ad296bc0dbba40ea1a7c613bd28decbe5cedcf0a8011b6a9f9d9c4cde
+            [field1] => 944477894178598500
+            [field2] => 213313
+            [field3] => 320.94
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 944477894178598500
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+)
+
+Array
+(
+    [timestamp] => 2026-01-30 08:09:54
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536366938
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697569618145
+            [amount] => 300.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [additionalCharges] => 20.94
+            [net_amount_debit] => 320.94
+            [addedon] => 2026-01-30 12:39:22
+            [productinfo] => Booking Payment
+            [firstname] => Harish RAJKUMAR
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => harish@gmail.com
+            [phone] => 918015021359
+            [udf1] => 32128OTH3dzy4
+            [udf2] => 614049
+            [udf3] => 32128
+            [udf4] => 2026-02-01
+            [udf5] => {"slot_from":"09:00","slot_to":"17:00","token_count":1,"category_id":"DEPT_697c450c69c14","department_id":null,"batch_id":"0:0","receipt":"receipt_614049_1769756961","gst_type":"inclusive","gst_percent":5,"gst_amount":0,"sub_total":300,"payment_id":"329",
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => da0372e163ca6020e60acd9fe6d6884db9bc3833033004c86af8cea3a299907cf227e7032e6f08857ef13c644c6cec68e166385cf1b51b8498f2b5998c9f5652
+            [field1] => 855713752420645400
+            [field2] => 103669
+            [field3] => 320.94
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 855713752420645400
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+)
+
+Array
+(
+    [timestamp] => 2026-01-30 08:14:56
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536366938
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697569618145
+            [amount] => 300.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [additionalCharges] => 20.94
+            [net_amount_debit] => 320.94
+            [addedon] => 2026-01-30 12:39:22
+            [productinfo] => Booking Payment
+            [firstname] => Harish RAJKUMAR
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => harish@gmail.com
+            [phone] => 918015021359
+            [udf1] => 32128OTH3dzy4
+            [udf2] => 614049
+            [udf3] => 32128
+            [udf4] => 2026-02-01
+            [udf5] => {"slot_from":"09:00","slot_to":"17:00","token_count":1,"category_id":"DEPT_697c450c69c14","department_id":null,"batch_id":"0:0","receipt":"receipt_614049_1769756961","gst_type":"inclusive","gst_percent":5,"gst_amount":0,"sub_total":300,"payment_id":"329",
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => da0372e163ca6020e60acd9fe6d6884db9bc3833033004c86af8cea3a299907cf227e7032e6f08857ef13c644c6cec68e166385cf1b51b8498f2b5998c9f5652
+            [field1] => 855713752420645400
+            [field2] => 103669
+            [field3] => 320.94
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 855713752420645400
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+)
+
+Array
+(
+    [timestamp] => 2026-01-30 08:52:44
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536367573
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697595309474
+            [amount] => 300.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [additionalCharges] => 20.94
+            [net_amount_debit] => 320.94
+            [addedon] => 2026-01-30 13:22:11
+            [productinfo] => Hair
+            [firstname] => Harish RAJKUMAR
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => harish@gmail.com
+            [phone] => 918015021359
+            [udf1] => 32128OTH3nxy4g
+            [udf2] => 614049
+            [udf3] => 32128
+            [udf4] => 2026-02-01
+            [udf5] => {"slot_from":"09:00","slot_to":"17:00","token_count":1,"category_id":"DEPT_697c450c69c14","department_id":"DEPT_697c450c69c14","batch_id":"0:0","receipt":"receipt_614049_1769759530","gst_type":"inclusive","gst_percent":5,"gst_amount":0,"sub_total":300,"pa
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => 0de738eecd8bd0ffcd0d4e909ce8fd4b1acda7c860d5637b993fde4b69f92072d7c900baef9565238a5f48c2ea52f6f65f0ded236270760e34ffedc56f10eade
+            [field1] => 817259804988995000
+            [field2] => 821562
+            [field3] => 320.94
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 817259804988995000
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+)
+
+Array
+(
+    [timestamp] => 2026-01-30 08:54:06
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536367585
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697596143043
+            [amount] => 170.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [additionalCharges] => 14.03
+            [net_amount_debit] => 184.03
+            [addedon] => 2026-01-30 13:23:35
+            [productinfo] => test
+            [firstname] => Harish RAJKUMAR
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => harish@gmail.com
+            [phone] => 918015021359
+            [udf1] => 32128OTH3sozg
+            [udf2] => 614049
+            [udf3] => 32128
+            [udf4] => 2026-02-05
+            [udf5] => {"slot_from":"09:00","slot_to":"17:00","token_count":1,"category_id":"DEPT_6976325e9bf5c","department_id":"DEPT_6976325e9bf5c","batch_id":"4:0","receipt":"receipt_614049_1769759614","gst_type":"inclusive","gst_percent":5,"gst_amount":0,"sub_total":170,"pa
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => ab82cf5f52e011e9864d6a241f7316c2936d361fbc39240fbce7d0e7884ae11f29b5b908c25f2eb90b12b07a4c95c260f7fdfb746704be7eae975d8a6f9e1e3b
+            [field1] => 975990517704938200
+            [field2] => 435663
+            [field3] => 184.03
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 975990517704938200
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+)
+
+Array
+(
+    [timestamp] => 2026-01-30 08:58:18
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536367585
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697596143043
+            [amount] => 170.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [additionalCharges] => 14.03
+            [net_amount_debit] => 184.03
+            [addedon] => 2026-01-30 13:23:35
+            [productinfo] => test
+            [firstname] => Harish RAJKUMAR
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => harish@gmail.com
+            [phone] => 918015021359
+            [udf1] => 32128OTH3sozg
+            [udf2] => 614049
+            [udf3] => 32128
+            [udf4] => 2026-02-05
+            [udf5] => {"slot_from":"09:00","slot_to":"17:00","token_count":1,"category_id":"DEPT_6976325e9bf5c","department_id":"DEPT_6976325e9bf5c","batch_id":"4:0","receipt":"receipt_614049_1769759614","gst_type":"inclusive","gst_percent":5,"gst_amount":0,"sub_total":170,"pa
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => ab82cf5f52e011e9864d6a241f7316c2936d361fbc39240fbce7d0e7884ae11f29b5b908c25f2eb90b12b07a4c95c260f7fdfb746704be7eae975d8a6f9e1e3b
+            [field1] => 975990517704938200
+            [field2] => 435663
+            [field3] => 184.03
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 975990517704938200
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+)
+
+Array
+(
+    [timestamp] => 2026-01-30 09:03:22
+    [POST_data] => Array
+        (
+            [mihpayid] => 403993715536367680
+            [mode] => CC
+            [status] => success
+            [unmappedstatus] => captured
+            [key] => gtKFFx
+            [txnid] => TXN17697601355028
+            [amount] => 5.00
+            [cardCategory] => domestic
+            [discount] => 0.00
+            [net_amount_debit] => 5
+            [addedon] => 2026-01-30 13:32:16
+            [productinfo] => Deepak
+            [firstname] => Barani
+            [lastname] => 
+            [address1] => 
+            [address2] => 
+            [city] => 
+            [state] => 
+            [country] => 
+            [zipcode] => 
+            [email] => barani@gmail.com
+            [phone] => 918888888888
+            [udf1] => 85960HOS1rakj
+            [udf2] => 774100
+            [udf3] => 85960
+            [udf4] => 2026-02-04
+            [udf5] => {"slot_from":"18:00","slot_to":"21:00","token_count":1,"category_id":"CAT_69732006cc321","department_id":null,"batch_id":"3:0","receipt":"receipt_774100_1769760135","gst_type":"inclusive","gst_percent":18,"gst_amount":0,"sub_total":5,"payment_id":"337","s
+            [udf6] => 
+            [udf7] => 
+            [udf8] => 
+            [udf9] => 
+            [udf10] => 
+            [hash] => d3848d1d15b65ea30217287509f486e92d0178fea36d1be651077589ca6c57a536e4ee11bc8df904a0a541af793098752e1bdd7c47a9a11c408a023a31944450
+            [field1] => 255722541536254820
+            [field2] => 845049
+            [field3] => 5.00
+            [field4] => 
+            [field5] => 00
+            [field6] => 02
+            [field7] => AUTHPOSITIVE
+            [field8] => AUTHORIZED
+            [field9] => Transaction is Successful
+            [payment_source] => payu
+            [pa_name] => PayU
+            [PG_TYPE] => CC-PG
+            [bank_ref_num] => 255722541536254820
+            [bankcode] => CC
+            [error] => E000
+            [error_Message] => No Error
+            [cardnum] => XXXXXXXXXXXX2346
+        )
+
+    [GET_data] => Array
+        (
+        )
+
+)
+

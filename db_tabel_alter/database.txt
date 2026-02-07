@@ -1,0 +1,635 @@
+28/11/2025
+This tabel query paste in settings 
+
+ALTER TABLE `settings`
+ADD COLUMN `gst_tax_type` varchar(255) DEFAULT NULL AFTER `currency`,
+ADD COLUMN `gst_number` varchar(255) DEFAULT NULL AFTER `gst_tax_type`,
+ADD COLUMN `gst_percentage` int(11) NOT NULL DEFAULT 0 AFTER `gst_number`,
+ADD COLUMN `favicon` varchar(255) NOT NULL AFTER `gst_percentage`,
+ADD COLUMN `address` text DEFAULT NULL AFTER `favicon`,
+ADD COLUMN `logo` varchar(255) NOT NULL AFTER `address`,
+ADD COLUMN `disclaimer` text DEFAULT NULL AFTER `logo`,
+ADD COLUMN `razorpay_key_id` varchar(255) DEFAULT NULL AFTER `disclaimer`,
+ADD COLUMN `razorpay_key_secret` varchar(255) DEFAULT NULL AFTER `razorpay_key_id`,
+ADD COLUMN `ippopay_public_key` varchar(255) DEFAULT NULL AFTER `razorpay_key_secret`,
+ADD COLUMN `phonepe_key_merchant_id` varchar(255) DEFAULT NULL AFTER `ippopay_public_key`,
+ADD COLUMN `phonepe_key_index` varchar(255) DEFAULT NULL AFTER `phonepe_key_merchant_id`,
+ADD COLUMN `phonepe_key` varchar(255) DEFAULT NULL AFTER `phonepe_key_index`;
+
+29/11/2025
+This tabel query paste in settings For Time Zone
+
+ALTER TABLE `settings` ADD `timezone` VARCHAR(100) NOT NULL DEFAULT 'Asia/Kolkata' AFTER `disclaimer`;
+
+
+4/12/2025
+1) Create new Field for gst precentage add this apste in site_settings
+
+ALTER TABLE site_settings ADD COLUMN tax_percent DECIMAL(5,2) DEFAULT NULL;
+
+2) For Alignment
+-- 1. First, remove tax_percent if it exists
+-- ALTER TABLE site_settings DROP COLUMN IF EXISTS tax_percent;
+
+-- 2. Add tax_percent in the correct position (after gst_type)
+ALTER TABLE site_settings 
+ADD COLUMN tax_percent DECIMAL(5,2) DEFAULT NULL 
+AFTER gst_type;
+
+
+
+10/12/2025
+
+-- Create subscription_histories table
+CREATE TABLE IF NOT EXISTS `subscription_histories` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `invoice_number` int(11) NOT NULL,
+  `plan_id` int(11) DEFAULT NULL,
+  `user_id` int(11) DEFAULT NULL,
+  `payment_method` varchar(50) DEFAULT NULL,
+  `payment_id` varchar(255) DEFAULT NULL,
+  `currency` varchar(10) DEFAULT 'INR',
+  `currency_symbol` varchar(10) DEFAULT '₹',
+  `amount` int(11) NOT NULL DEFAULT 0,
+  `gst_amount` int(11) NOT NULL DEFAULT 0,
+  `gst_type` varchar(20) DEFAULT NULL,
+  `gst_number` varchar(255) DEFAULT NULL,
+  `gst_percentage` int(11) DEFAULT 18,
+  `discount` int(11) NOT NULL DEFAULT 0,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `address_1` text DEFAULT NULL,
+  `address_2` text DEFAULT NULL,
+  `state` varchar(100) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `pin_code` varchar(10) DEFAULT NULL,
+  `country` varchar(100) DEFAULT 'India',
+  `created_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `invoice_number` (`invoice_number`),
+  KEY `plan_id` (`plan_id`),
+  KEY `user_id` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- If the table already exists, just add missing columns
+ALTER TABLE `subscription_histories` 
+ADD COLUMN IF NOT EXISTS `currency_symbol` VARCHAR(10) DEFAULT '₹';
+
+11/12/2025
+
+For PayU (Deepak Work) ----------> {This Paste In settings Tabel}
+-- Remove ippopay_public_key column and add PayU columns
+ALTER TABLE `settings` 
+DROP COLUMN `ippopay_public_key`,
+ADD COLUMN `payu_merchant_key` VARCHAR(255) DEFAULT NULL AFTER `razorpay_key_secret`,
+ADD COLUMN `payu_salt` VARCHAR(255) DEFAULT NULL AFTER `payu_merchant_key`,
+ADD COLUMN `payu_client_id` VARCHAR(255) DEFAULT NULL AFTER `payu_salt`,
+ADD COLUMN `payu_client_secret` VARCHAR(255) DEFAULT NULL AFTER `payu_client_id`;
+
+
+
+16/12/2025
+
+This query for events limit in subscription_plans
+
+-- Add events_limit column to subscription_plans table
+ALTER TABLE `subscription_plans` 
+ADD COLUMN `events_limit` VARCHAR(191) NOT NULL DEFAULT 'unlimited' 
+AFTER `appointments_limit`;
+
+
+19/12/2025
+
+This Tabel For Create a Department for oth-opts
+
+-- Table structure for table `departments`
+--
+
+CREATE TABLE `departments` (
+  `id` int(11) NOT NULL,
+  `department_id` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `type` varchar(255) DEFAULT NULL,
+  `slug` varchar(255) DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `meta_title` varchar(255) DEFAULT NULL,
+  `meta_description` text DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  `updated_at` datetime(3) DEFAULT NULL ON UPDATE current_timestamp(3)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `departments`
+--
+ALTER TABLE `departments`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `departments_department_id_key` (`department_id`),
+  ADD KEY `departments_user_id_fkey` (`user_id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `departments`
+--
+ALTER TABLE `departments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `departments`
+--
+ALTER TABLE `departments`
+  ADD CONSTRAINT `departments_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+22/12/2025
+
+This Code pastein Department tabel for add type name nad amount
+
+  ALTER TABLE `departments` 
+ADD COLUMN `type_main_name` VARCHAR(255) DEFAULT NULL AFTER `type`,
+ADD COLUMN `type_main_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_main_name`,
+ADD COLUMN `type_1_name` VARCHAR(255) DEFAULT NULL AFTER `type_main_amount`,
+ADD COLUMN `type_1_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_1_name`,
+ADD COLUMN `type_2_name` VARCHAR(255) DEFAULT NULL AFTER `type_1_amount`,
+ADD COLUMN `type_2_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_2_name`,
+ADD COLUMN `type_3_name` VARCHAR(255) DEFAULT NULL AFTER `type_2_amount`,
+ADD COLUMN `type_3_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_3_name`,
+ADD COLUMN `type_4_name` VARCHAR(255) DEFAULT NULL AFTER `type_3_amount`,
+ADD COLUMN `type_4_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_4_name`,
+ADD COLUMN `type_5_name` VARCHAR(255) DEFAULT NULL AFTER `type_4_amount`,
+ADD COLUMN `type_5_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_5_name`,
+ADD COLUMN `type_6_name` VARCHAR(255) DEFAULT NULL AFTER `type_5_amount`,
+ADD COLUMN `type_6_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_6_name`,
+ADD COLUMN `type_7_name` VARCHAR(255) DEFAULT NULL AFTER `type_6_amount`,
+ADD COLUMN `type_7_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_7_name`,
+ADD COLUMN `type_8_name` VARCHAR(255) DEFAULT NULL AFTER `type_7_amount`,
+ADD COLUMN `type_8_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_8_name`,
+ADD COLUMN `type_9_name` VARCHAR(255) DEFAULT NULL AFTER `type_8_amount`,
+ADD COLUMN `type_9_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_9_name`,
+ADD COLUMN `type_10_name` VARCHAR(255) DEFAULT NULL AFTER `type_9_amount`,
+ADD COLUMN `type_10_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_10_name`,
+ADD COLUMN `type_11_name` VARCHAR(255) DEFAULT NULL AFTER `type_10_amount`,
+ADD COLUMN `type_11_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_11_name`,
+ADD COLUMN `type_12_name` VARCHAR(255) DEFAULT NULL AFTER `type_11_amount`,
+ADD COLUMN `type_12_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_12_name`,
+ADD COLUMN `type_13_name` VARCHAR(255) DEFAULT NULL AFTER `type_12_amount`,
+ADD COLUMN `type_13_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_13_name`,
+ADD COLUMN `type_14_name` VARCHAR(255) DEFAULT NULL AFTER `type_13_amount`,
+ADD COLUMN `type_14_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_14_name`,
+ADD COLUMN `type_15_name` VARCHAR(255) DEFAULT NULL AFTER `type_14_amount`,
+ADD COLUMN `type_15_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_15_name`,
+ADD COLUMN `type_16_name` VARCHAR(255) DEFAULT NULL AFTER `type_15_amount`,
+ADD COLUMN `type_16_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_16_name`,
+ADD COLUMN `type_17_name` VARCHAR(255) DEFAULT NULL AFTER `type_16_amount`,
+ADD COLUMN `type_17_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_17_name`,
+ADD COLUMN `type_18_name` VARCHAR(255) DEFAULT NULL AFTER `type_17_amount`,
+ADD COLUMN `type_18_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_18_name`,
+ADD COLUMN `type_19_name` VARCHAR(255) DEFAULT NULL AFTER `type_18_amount`,
+ADD COLUMN `type_19_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_19_name`,
+ADD COLUMN `type_20_name` VARCHAR(255) DEFAULT NULL AFTER `type_19_amount`,
+ADD COLUMN `type_20_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_20_name`,
+ADD COLUMN `type_21_name` VARCHAR(255) DEFAULT NULL AFTER `type_20_amount`,
+ADD COLUMN `type_21_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_21_name`,
+ADD COLUMN `type_22_name` VARCHAR(255) DEFAULT NULL AFTER `type_21_amount`,
+ADD COLUMN `type_22_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_22_name`,
+ADD COLUMN `type_23_name` VARCHAR(255) DEFAULT NULL AFTER `type_22_amount`,
+ADD COLUMN `type_23_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_23_name`,
+ADD COLUMN `type_24_name` VARCHAR(255) DEFAULT NULL AFTER `type_23_amount`,
+ADD COLUMN `type_24_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_24_name`,
+ADD COLUMN `type_25_name` VARCHAR(255) DEFAULT NULL AFTER `type_24_amount`,
+ADD COLUMN `type_25_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_25_name`;
+
+
+ALTER TABLE departments DROP COLUMN `type`;
+
+
+
+24/12/2025
+
+This query for database change for categories
+
+ALTER TABLE categories
+ADD COLUMN doctor_name VARCHAR(255) DEFAULT NULL,
+ADD COLUMN specialization VARCHAR(255) DEFAULT NULL,
+ADD COLUMN qualification VARCHAR(255) DEFAULT NULL,
+ADD COLUMN experience INT DEFAULT NULL,
+ADD COLUMN reg_number VARCHAR(255) DEFAULT NULL,
+ADD COLUMN doctor_image VARCHAR(255) DEFAULT NULL;
+
+
+This query for doctor_schedule un wanted data remove
+ALTER TABLE doctor_schedule 
+DROP COLUMN name,
+DROP COLUMN status,
+DROP COLUMN previous_amount,
+DROP COLUMN specialization,
+DROP COLUMN qualification,
+DROP COLUMN experience,
+DROP COLUMN doctor_image,
+DROP COLUMN gst_percentage;
+
+
+
+ALTER TABLE `doctor_schedule` 
+ADD COLUMN `status` TINYINT(1) DEFAULT 1 AFTER `additional_images`;
+
+
+
+-- Add missing columns to doctor_schedule table
+ALTER TABLE `doctor_schedule` 
+ADD COLUMN `name` VARCHAR(255) DEFAULT NULL AFTER `category_id`,
+ADD COLUMN `specialization` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN `qualification` VARCHAR(255) DEFAULT NULL,
+ADD COLUMN `experience` INT(11) DEFAULT NULL,
+ADD COLUMN `doctor_image` VARCHAR(255) DEFAULT NULL;
+
+-- Make amount field accept decimal values (optional)
+ALTER TABLE `doctor_schedule` MODIFY COLUMN `amount` DECIMAL(10,2) DEFAULT 0.00;
+
+
+
+
+7/1/2026 
+This is for change the subscrption plan tabel 
+
+-- Rename events_limit to free_credits
+ALTER TABLE subscription_plans CHANGE events_limit free_credits VARCHAR(191) NOT NULL DEFAULT 'unlimited';
+
+-- Remove categories_limit column
+ALTER TABLE subscription_plans DROP COLUMN categories_limit;
+
+-- Reorder columns to match your desired order
+ALTER TABLE subscription_plans 
+MODIFY COLUMN appointments_limit varchar(191) NOT NULL AFTER feature_lists,
+MODIFY COLUMN customers_limit varchar(191) NOT NULL AFTER appointments_limit,
+MODIFY COLUMN services_limit varchar(191) NOT NULL AFTER customers_limit,
+MODIFY COLUMN coupons_limit varchar(191) NOT NULL AFTER services_limit,
+MODIFY COLUMN manual_payment_methods_limit varchar(191) NOT NULL AFTER coupons_limit,
+MODIFY COLUMN free_credits varchar(191) NOT NULL DEFAULT 'unlimited' AFTER manual_payment_methods_limit;
+
+ALTER TABLE subscription_plans 
+ADD COLUMN menu_limit VARCHAR(191) NOT NULL DEFAULT 'unlimited' 
+AFTER services_limit;
+
+
+9/1/2026 
+in users tabel paste the query 
+`is_suspended` tinyint(1) NOT NULL DEFAULT 0
+
+
+
+-- Drop existing table if it exists
+DROP TABLE IF EXISTS `suspend_users`;
+
+-- Create new table with correct foreign key reference
+CREATE TABLE `suspend_users` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) NOT NULL,
+  `reason` text DEFAULT NULL,
+  `action_type` enum('suspend','unsuspend') NOT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  PRIMARY KEY (`id`),
+  KEY `fk_suspend_users_user` (`user_id`),
+  CONSTRAINT `fk_suspend_users_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+
+
+19//2027
+this query for Department Tabel HSN code column
+
+-- Add HSN columns for all type fields
+ALTER TABLE `departments`
+ADD COLUMN `type_main_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_1_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_2_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_3_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_4_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_5_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_6_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_7_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_8_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_9_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_10_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_11_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_12_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_13_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_14_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_15_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_16_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_17_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_18_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_19_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_20_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_21_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_22_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_23_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_24_hsn` VARCHAR(50) DEFAULT NULL,
+ADD COLUMN `type_25_hsn` VARCHAR(50) DEFAULT NULL;
+
+
+-- Reorder columns to group Name, Amount, HSN together for each type
+ALTER TABLE `departments`
+MODIFY COLUMN `type_main_name` VARCHAR(255) DEFAULT NULL AFTER `slug`,
+MODIFY COLUMN `type_main_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_main_name`,
+MODIFY COLUMN `type_main_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_main_amount`,
+MODIFY COLUMN `type_1_name` VARCHAR(255) DEFAULT NULL AFTER `type_main_hsn`,
+MODIFY COLUMN `type_1_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_1_name`,
+MODIFY COLUMN `type_1_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_1_amount`,
+MODIFY COLUMN `type_2_name` VARCHAR(255) DEFAULT NULL AFTER `type_1_hsn`,
+MODIFY COLUMN `type_2_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_2_name`,
+MODIFY COLUMN `type_2_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_2_amount`,
+MODIFY COLUMN `type_3_name` VARCHAR(255) DEFAULT NULL AFTER `type_2_hsn`,
+MODIFY COLUMN `type_3_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_3_name`,
+MODIFY COLUMN `type_3_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_3_amount`,
+MODIFY COLUMN `type_4_name` VARCHAR(255) DEFAULT NULL AFTER `type_3_hsn`,
+MODIFY COLUMN `type_4_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_4_name`,
+MODIFY COLUMN `type_4_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_4_amount`,
+MODIFY COLUMN `type_5_name` VARCHAR(255) DEFAULT NULL AFTER `type_4_hsn`,
+MODIFY COLUMN `type_5_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_5_name`,
+MODIFY COLUMN `type_5_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_5_amount`,
+MODIFY COLUMN `type_6_name` VARCHAR(255) DEFAULT NULL AFTER `type_5_hsn`,
+MODIFY COLUMN `type_6_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_6_name`,
+MODIFY COLUMN `type_6_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_6_amount`,
+MODIFY COLUMN `type_7_name` VARCHAR(255) DEFAULT NULL AFTER `type_6_hsn`,
+MODIFY COLUMN `type_7_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_7_name`,
+MODIFY COLUMN `type_7_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_7_amount`,
+MODIFY COLUMN `type_8_name` VARCHAR(255) DEFAULT NULL AFTER `type_7_hsn`,
+MODIFY COLUMN `type_8_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_8_name`,
+MODIFY COLUMN `type_8_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_8_amount`,
+MODIFY COLUMN `type_9_name` VARCHAR(255) DEFAULT NULL AFTER `type_8_hsn`,
+MODIFY COLUMN `type_9_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_9_name`,
+MODIFY COLUMN `type_9_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_9_amount`,
+MODIFY COLUMN `type_10_name` VARCHAR(255) DEFAULT NULL AFTER `type_9_hsn`,
+MODIFY COLUMN `type_10_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_10_name`,
+MODIFY COLUMN `type_10_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_10_amount`,
+MODIFY COLUMN `type_11_name` VARCHAR(255) DEFAULT NULL AFTER `type_10_hsn`,
+MODIFY COLUMN `type_11_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_11_name`,
+MODIFY COLUMN `type_11_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_11_amount`,
+MODIFY COLUMN `type_12_name` VARCHAR(255) DEFAULT NULL AFTER `type_11_hsn`,
+MODIFY COLUMN `type_12_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_12_name`,
+MODIFY COLUMN `type_12_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_12_amount`,
+MODIFY COLUMN `type_13_name` VARCHAR(255) DEFAULT NULL AFTER `type_12_hsn`,
+MODIFY COLUMN `type_13_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_13_name`,
+MODIFY COLUMN `type_13_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_13_amount`,
+MODIFY COLUMN `type_14_name` VARCHAR(255) DEFAULT NULL AFTER `type_13_hsn`,
+MODIFY COLUMN `type_14_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_14_name`,
+MODIFY COLUMN `type_14_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_14_amount`,
+MODIFY COLUMN `type_15_name` VARCHAR(255) DEFAULT NULL AFTER `type_14_hsn`,
+MODIFY COLUMN `type_15_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_15_name`,
+MODIFY COLUMN `type_15_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_15_amount`,
+MODIFY COLUMN `type_16_name` VARCHAR(255) DEFAULT NULL AFTER `type_15_hsn`,
+MODIFY COLUMN `type_16_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_16_name`,
+MODIFY COLUMN `type_16_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_16_amount`,
+MODIFY COLUMN `type_17_name` VARCHAR(255) DEFAULT NULL AFTER `type_16_hsn`,
+MODIFY COLUMN `type_17_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_17_name`,
+MODIFY COLUMN `type_17_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_17_amount`,
+MODIFY COLUMN `type_18_name` VARCHAR(255) DEFAULT NULL AFTER `type_17_hsn`,
+MODIFY COLUMN `type_18_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_18_name`,
+MODIFY COLUMN `type_18_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_18_amount`,
+MODIFY COLUMN `type_19_name` VARCHAR(255) DEFAULT NULL AFTER `type_18_hsn`,
+MODIFY COLUMN `type_19_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_19_name`,
+MODIFY COLUMN `type_19_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_19_amount`,
+MODIFY COLUMN `type_20_name` VARCHAR(255) DEFAULT NULL AFTER `type_19_hsn`,
+MODIFY COLUMN `type_20_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_20_name`,
+MODIFY COLUMN `type_20_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_20_amount`,
+MODIFY COLUMN `type_21_name` VARCHAR(255) DEFAULT NULL AFTER `type_20_hsn`,
+MODIFY COLUMN `type_21_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_21_name`,
+MODIFY COLUMN `type_21_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_21_amount`,
+MODIFY COLUMN `type_22_name` VARCHAR(255) DEFAULT NULL AFTER `type_21_hsn`,
+MODIFY COLUMN `type_22_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_22_name`,
+MODIFY COLUMN `type_22_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_22_amount`,
+MODIFY COLUMN `type_23_name` VARCHAR(255) DEFAULT NULL AFTER `type_22_hsn`,
+MODIFY COLUMN `type_23_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_23_name`,
+MODIFY COLUMN `type_23_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_23_amount`,
+MODIFY COLUMN `type_24_name` VARCHAR(255) DEFAULT NULL AFTER `type_23_hsn`,
+MODIFY COLUMN `type_24_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_24_name`,
+MODIFY COLUMN `type_24_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_24_amount`,
+MODIFY COLUMN `type_25_name` VARCHAR(255) DEFAULT NULL AFTER `type_24_hsn`,
+MODIFY COLUMN `type_25_amount` DECIMAL(10,2) DEFAULT NULL AFTER `type_25_name`,
+MODIFY COLUMN `type_25_hsn` VARCHAR(50) DEFAULT NULL AFTER `type_25_amount`;
+
+
+
+-----------------------------------------------------------------
+this query for category HSN code this Paste in category Tabel
+-- Add HSN code column to categories table
+ALTER TABLE `categories`
+ADD COLUMN `hsn_code` VARCHAR(50) DEFAULT NULL AFTER `doctor_image`;
+
+22/1/2026
+
+-- This query for cutomer paymet tabel 
+ALTER TABLE customer_payment 
+ADD COLUMN appointment_date DATE DEFAULT NULL,
+ADD COLUMN slot_from VARCHAR(20) DEFAULT NULL,
+ADD COLUMN slot_to VARCHAR(20) DEFAULT NULL,
+ADD COLUMN token_count INT DEFAULT 1;
+ADD COLUMN service_reference_id VARCHAR(255) DEFAULT NULL,
+ADD COLUMN service_reference_type VARCHAR(50) DEFAULT NULL,
+ADD COLUMN service_name VARCHAR(255) DEFAULT NULL;
+
+24/1/2026
+ALTER TABLE customer_payment 
+ADD COLUMN batch_id VARCHAR(50) DEFAULT NULL;
+
+
+25/1/2026
+
+ALTER TABLE departments 
+ADD COLUMN leave_dates LONGTEXT DEFAULT NULL CHECK (json_valid(`leave_dates`));
+
+26/1/2026
+-- Remove the image column from manual_payment_methods table
+ALTER TABLE manual_payment_methods DROP COLUMN image;
+
+ALTER TABLE `menu_items` 
+ADD COLUMN `hsn_code` VARCHAR(20) DEFAULT NULL 
+AFTER `description`;
+
+
+
+27/1/2026
+
+-- Add token update history column to doctor_schedule table
+ALTER TABLE `doctor_schedule` 
+ADD COLUMN `token_update_history` LONGTEXT DEFAULT NULL CHECK (json_valid(`token_update_history`));
+
+-- OR if you want a separate table for better management:
+CREATE TABLE `doctor_token_history` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `doctor_schedule_id` int(11) NOT NULL,
+  `slot_batch_id` varchar(50) NOT NULL,
+  `day_index` int(11) DEFAULT NULL,
+  `slot_index` int(11) DEFAULT NULL,
+  `old_token` int(11) DEFAULT 0,
+  `new_token` int(11) DEFAULT 0,
+  `total_token` int(11) DEFAULT 0,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `doctor_schedule_id` (`doctor_schedule_id`),
+  KEY `slot_batch_id` (`slot_batch_id`),
+  CONSTRAINT `doctor_token_history_ibfk_1` FOREIGN KEY (`doctor_schedule_id`) REFERENCES `doctor_schedule` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+
+-- Update the doctor_token_history table schema
+ALTER TABLE `doctor_token_history`
+DROP FOREIGN KEY `doctor_token_history_ibfk_1`;
+
+-- First drop the old column
+ALTER TABLE `doctor_token_history`
+DROP COLUMN `doctor_schedule_id`;
+
+-- Add category_id column (matching doctor_schedule's category_id)
+ALTER TABLE `doctor_token_history`
+ADD COLUMN `category_id` varchar(255) DEFAULT NULL,
+ADD COLUMN `doctor_schedule_id_temp` int(11) DEFAULT NULL;
+
+-- Add index on category_id
+CREATE INDEX `category_id` ON `doctor_token_history` (`category_id`);
+
+-- Remove the unused token_update_history column from doctor_schedule table
+ALTER TABLE `doctor_schedule` 
+DROP COLUMN `token_update_history`;
+
+-- Drop day_index column since you don't want it
+ALTER TABLE `doctor_token_history` 
+DROP COLUMN `day_index`;
+
+-- Drop slot_index column (we'll parse it from batch_id instead)
+ALTER TABLE `doctor_token_history` 
+DROP COLUMN `slot_index`;
+
+-- OR if you want to keep a slot_index column that's derived from batch_id
+ALTER TABLE `doctor_token_history` 
+ADD COLUMN `slot_index` int(11) DEFAULT NULL AFTER `slot_batch_id`;
+
+-- Update existing records to parse slot_index from batch_id
+UPDATE `doctor_token_history` 
+SET `slot_index` = CAST(SUBSTRING_INDEX(`slot_batch_id`, ':', -1) AS UNSIGNED);
+
+ALTER TABLE `doctor_token_history` 
+DROP COLUMN `slot_index`;
+
+
+-- First, drop the slot_index column if it exists
+ALTER TABLE `doctor_token_history` 
+DROP COLUMN IF EXISTS `slot_index`;
+
+-- Reorder columns as requested
+ALTER TABLE `doctor_token_history` 
+MODIFY COLUMN `category_id` varchar(255) DEFAULT NULL AFTER `id`,
+MODIFY COLUMN `doctor_schedule_id_temp` int(11) DEFAULT NULL AFTER `category_id`,
+MODIFY COLUMN `slot_batch_id` varchar(50) NOT NULL AFTER `doctor_schedule_id_temp`,
+MODIFY COLUMN `old_token` int(11) DEFAULT 0 AFTER `slot_batch_id`,
+MODIFY COLUMN `new_token` int(11) DEFAULT 0 AFTER `old_token`,
+MODIFY COLUMN `total_token` int(11) DEFAULT 0 AFTER `new_token`,
+MODIFY COLUMN `updated_by` int(11) DEFAULT NULL AFTER `total_token`,
+MODIFY COLUMN `created_at` datetime DEFAULT current_timestamp() AFTER `updated_by`;
+
+-- OR if you want to create a fresh table with correct order:
+CREATE TABLE IF NOT EXISTS `doctor_token_history_new` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `category_id` varchar(255) DEFAULT NULL,
+  `doctor_schedule_id_temp` int(11) DEFAULT NULL,
+  `slot_batch_id` varchar(50) NOT NULL,
+  `old_token` int(11) DEFAULT 0,
+  `new_token` int(11) DEFAULT 0,
+  `total_token` int(11) DEFAULT 0,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `slot_batch_id` (`slot_batch_id`),
+  KEY `category_id` (`category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Copy data from old table to new table
+INSERT INTO `doctor_token_history_new` 
+(id, category_id, doctor_schedule_id_temp, slot_batch_id, old_token, new_token, total_token, updated_by, created_at)
+SELECT 
+id, category_id, doctor_schedule_id_temp, slot_batch_id, old_token, new_token, total_token, updated_by, created_at
+FROM `doctor_token_history`;
+
+-- Drop old table and rename new table
+DROP TABLE `doctor_token_history`;
+RENAME TABLE `doctor_token_history_new` TO `doctor_token_history`;
+
+
+-- First, drop the slot_index column if it exists
+ALTER TABLE `doctor_token_history` 
+DROP COLUMN IF EXISTS `slot_index`;
+
+-- Reorder columns to match your exact order
+ALTER TABLE `doctor_token_history` 
+MODIFY COLUMN `id` int(11) NOT NULL AUTO_INCREMENT FIRST,
+MODIFY COLUMN `doctor_schedule_id_temp` int(11) DEFAULT NULL AFTER `id`,
+MODIFY COLUMN `category_id` varchar(255) DEFAULT NULL AFTER `doctor_schedule_id_temp`,
+MODIFY COLUMN `slot_batch_id` varchar(50) NOT NULL AFTER `category_id`,
+MODIFY COLUMN `old_token` int(11) DEFAULT 0 AFTER `slot_batch_id`,
+MODIFY COLUMN `new_token` int(11) DEFAULT 0 AFTER `old_token`,
+MODIFY COLUMN `total_token` int(11) DEFAULT 0 AFTER `new_token`,
+MODIFY COLUMN `updated_by` int(11) DEFAULT NULL AFTER `total_token`,
+MODIFY COLUMN `created_at` datetime DEFAULT current_timestamp() AFTER `updated_by`;
+
+-- OR create a new table with exact order
+CREATE TABLE IF NOT EXISTS `doctor_token_history_new` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `doctor_schedule_id_temp` int(11) DEFAULT NULL,
+  `category_id` varchar(255) DEFAULT NULL,
+  `slot_batch_id` varchar(50) NOT NULL,
+  `old_token` int(11) DEFAULT 0,
+  `new_token` int(11) DEFAULT 0,
+  `total_token` int(11) DEFAULT 0,
+  `updated_by` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  PRIMARY KEY (`id`),
+  KEY `slot_batch_id` (`slot_batch_id`),
+  KEY `category_id` (`category_id`),
+  KEY `doctor_schedule_id_temp` (`doctor_schedule_id_temp`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- Copy data from old table to new table (in correct order)
+INSERT INTO `doctor_token_history_new` 
+(id, doctor_schedule_id_temp, category_id, slot_batch_id, old_token, new_token, total_token, updated_by, created_at)
+SELECT 
+id, doctor_schedule_id_temp, category_id, slot_batch_id, old_token, new_token, total_token, updated_by, created_at
+FROM `doctor_token_history`;
+
+-- Drop old table and rename new table
+DROP TABLE `doctor_token_history`;
+RENAME TABLE `doctor_token_history_new` TO `doctor_token_history`;
+
+
+-- Add new columns for simple appointment timing
+ALTER TABLE `doctor_schedule` 
+
+ADD COLUMN `appointment_time_from` TIME DEFAULT NULL,
+ADD COLUMN `appointment_time_to` TIME DEFAULT NULL;
+
+29/01/2026
+
+ALTER TABLE `customer_payment` MODIFY `service_name` TEXT;
+
+-- Add UPI payment limit field to subscription_plans table
+ALTER TABLE `subscription_plans` 
+ADD COLUMN `upi_payment_methods_limit` VARCHAR(191) NOT NULL DEFAULT 'unlimited' 
+AFTER `manual_payment_methods_limit`;
+
+-- Update existing records to have a default value
+UPDATE `subscription_plans` 
+SET `upi_payment_methods_limit` = 'unlimited' 
+WHERE `upi_payment_methods_limit` IS NULL OR `upi_payment_methods_limit` = '';

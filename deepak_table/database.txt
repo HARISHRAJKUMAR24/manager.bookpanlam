@@ -1,0 +1,52 @@
+Droping employee table (11/12/2025)
+
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS employees;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+CREATE TABLE `employees` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `employee_id` varchar(255) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `position` varchar(255) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `phone` varchar(255) NOT NULL,
+  `address` varchar(255) DEFAULT NULL,
+  `joining_date` date DEFAULT NULL,
+  `image` varchar(255) DEFAULT NULL,
+  `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `employees_employee_id_key` (`employee_id`),
+  KEY `employees_user_id_fkey` (`user_id`),
+  CONSTRAINT `employees_user_id_fkey` FOREIGN KEY (`user_id`)
+      REFERENCES `users` (`user_id`) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+=====================================================================
+
+Droping category table (11/12/2025)
+
+
+=================================(18/12/2025)=====================================
+CREATE TABLE doctors (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  category_id INT NOT NULL,
+  doctor_name VARCHAR(255) NOT NULL,
+  specialization VARCHAR(255) NOT NULL,
+  qualification VARCHAR(255),
+  experience INT,
+  reg_number VARCHAR(255),
+  created_at DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+  FOREIGN KEY (category_id) REFERENCES categories(id)
+    ON DELETE CASCADE
+);
+ 
+ ==========================
+ RENAME TABLE services TO appointment_settings;
+
+ =========================
+
+ 
