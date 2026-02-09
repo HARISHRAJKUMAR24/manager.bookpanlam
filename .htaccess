@@ -1,4 +1,7 @@
 RewriteEngine On
+RewriteCond %{HTTP:Authorization} ^(.*)
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%1]
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
 
 # Redirect root URL to public/index.php
 RewriteRule ^$ public/index.php [L]
