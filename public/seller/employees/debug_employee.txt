@@ -1,0 +1,13 @@
+Array
+(
+    [user_id] => 32128
+    [employee_id] => 
+    [name] => deepakchitravel@gmail.com
+    [position] => xcv
+    [email] => deepakchitravel@gmail.com
+    [phone] => +919999999999
+    [address] => deepakchitravel@gmail.com
+    [image] => 
+    [joining_date] => 2026-02-12
+    [token] => 4c12c79096762a590ea4f88f4d820d5914ce87199b5d84405a25c70d93fc17f8
+)

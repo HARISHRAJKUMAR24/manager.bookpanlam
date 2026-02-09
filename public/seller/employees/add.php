@@ -15,6 +15,9 @@ $pdo = getDbConnection();
 $raw = file_get_contents("php://input");
 $data = json_decode($raw, true) ?? [];
 
+
+file_put_contents("debug_employee.txt", print_r($data, true));
+
 $token =
     ($data["token"] ?? null)    // token from JSON
     ?: ($_COOKIE["token"] ?? ""); // token from cookie
@@ -42,7 +45,7 @@ $seller_id = $user->user_id;
 /* ----------------------------------------------------
    3️⃣ VALIDATE REQUIRED FIELDS
 ---------------------------------------------------- */
-$required = ["employee_id", "name", "phone"];
+$required = [ "name", "phone"];
 foreach ($required as $field) {
     if (empty(trim($data[$field] ?? ""))) {
         echo json_encode([
@@ -56,7 +59,12 @@ foreach ($required as $field) {
 /* ----------------------------------------------------
    4️⃣ EXTRACT FIELDS
 ---------------------------------------------------- */
-$employee_id  = $data["employee_id"];
+// Auto-generate employee ID if not provided
+if (empty($data["employee_id"])) {
+    $employee_id = "EMP-" . strtoupper(substr(md5(uniqid()), 0, 8));
+} else {
+    $employee_id = $data["employee_id"];
+}
 $name         = $data["name"];
 $position     = $data["position"] ?? null;
 $email        = $data["email"] ?? null;
