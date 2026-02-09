@@ -18,7 +18,7 @@ $db = getDbConnection();
 
 // Query using site_slug (correct)
 $stmt = $db->prepare("
-    SELECT id, user_id, name, phone, email, site_name, site_slug 
+    SELECT id, user_id, name, phone, email, site_name, site_slug,service_type_id
     FROM users 
     WHERE site_slug = ? 
     LIMIT 1
