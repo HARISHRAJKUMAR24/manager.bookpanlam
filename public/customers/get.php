@@ -40,13 +40,9 @@ $offset = ($page - 1) * $limit;
 /* ===============================
    WHERE
 ================================ */
-$where = "WHERE user_id = :user_id";
+$where = "WHERE user_id = :user_id"; 
 $params = [":user_id" => $user_id];
 
-if ($q !== "") {
-    $where .= " AND (name LIKE :q OR phone LIKE :q)";
-    $params[":q"] = "%$q%";
-}
 
 /* ===============================
    COUNT
