@@ -41,7 +41,7 @@ if (!$appointmentId) {
 }
 
 /* =======================
-   FETCH APPOINTMENT WITH CUSTOMER DETAILS - FIXED JOIN
+   FETCH APPOINTMENT WITH CUSTOMER DETAILS
 ======================= */
 $sql = "
 SELECT 
@@ -49,11 +49,9 @@ SELECT
     c.name AS customer_name,
     c.email AS customer_email,
     c.phone AS customer_phone,
-    c.photo AS customer_photo,
-    c.customer_id AS customer_customer_id,
-    c.id AS customer_db_id
+    c.photo AS customer_photo
 FROM customer_payment cp
-LEFT JOIN customers c ON cp.customer_id = c.customer_id AND cp.user_id = c.user_id
+LEFT JOIN customers c ON cp.customer_id = c.customer_id AND c.user_id = :user_id
 WHERE cp.appointment_id = :appointment_id 
 AND cp.user_id = :user_id
 LIMIT 1
@@ -70,14 +68,6 @@ if (!$appointment) {
     echo json_encode(["success" => false, "message" => "Appointment not found"]);
     exit;
 }
-
-/* =======================
-   DEBUG: Check what data we got
-======================= */
-error_log("DEBUG Appointment Data:");
-error_log("Customer ID from cp: " . ($appointment['customer_id'] ?? 'NULL'));
-error_log("Customer Name: " . ($appointment['customer_name'] ?? 'NULL'));
-error_log("Customer Phone: " . ($appointment['customer_phone'] ?? 'NULL'));
 
 /* =======================
    PARSE SERVICE NAME (IT'S JSON)
@@ -102,12 +92,10 @@ if ($serviceName && strpos($serviceName, '{') === 0) {
 }
 
 /* =======================
-   PREPARE RESPONSE WITH CUSTOMER INFO
+   PREPARE RESPONSE WITH CUSTOMER DETAILS
 ======================= */
 $response = [
     "success" => true,
-    
-    // Appointment Info
     "appointmentId" => $appointment['appointment_id'],
     "appointment_id" => $appointment['appointment_id'],
     
@@ -137,21 +125,20 @@ $response = [
     "gst_amount" => $appointment['gst_amount'] ?? 0,
     
     // Customer Information (from customers table)
-    "customer_id" => $appointment['customer_id'], // This is 951272
-    "customer_db_id" => $appointment['customer_db_id'], // This is the auto-increment id
-    "name" => $appointment['customer_name'] ?? 'N/A',
-    "phone" => $appointment['customer_phone'] ?? 'N/A',
-    "email" => $appointment['customer_email'] ?? 'N/A',
-    "photo" => $appointment['customer_photo'] ?? null,
+    "customer_id" => $appointment['customer_id'],
+    "name" => $appointment['customer_name'],  // From customers table
+    "phone" => $appointment['customer_phone'], // From customers table
+    "email" => $appointment['customer_email'], // From customers table
+    "photo" => $appointment['customer_photo'], // From customers table
     
-    "customer" => $appointment['customer_name'] ? [
-        "id" => $appointment['customer_db_id'], // Use the auto-increment id
-        "customerId" => $appointment['customer_id'], // This is 951272
-        "name" => $appointment['customer_name'] ?? 'N/A',
-        "phone" => $appointment['customer_phone'] ?? 'N/A',
-        "email" => $appointment['customer_email'] ?? 'N/A',
-        "photo" => $appointment['customer_photo'] ?? null
-    ] : null,
+    // Customer object for frontend
+    "customer" => [
+        "name" => $appointment['customer_name'],
+        "email" => $appointment['customer_email'],
+        "phone" => $appointment['customer_phone'],
+        "photo" => $appointment['customer_photo'],
+        "customerId" => $appointment['customer_id']
+    ],
     
     // Service Information (parsed from service_name JSON)
     "service_name" => $serviceName,
@@ -178,17 +165,26 @@ $response = [
     "signature" => $appointment['signature'],
     "remark" => "",
     
-    // These will be null (not in your database structure)
-    "address" => 'N/A',
-    "area" => 'N/A',
-    "postalCode" => 'N/A'
+    // Note: address, area, postalCode are not in your customers table structure
+    // If you need these, you'll need to add them to the table or remove from frontend
+    "address" => null,
+    "area" => null,
+    "postalCode" => null
 ];
 
-// Add debug info
-$response['debug'] = [
-    'customer_id_in_cp' => $appointment['customer_id'],
-    'customer_name_found' => $appointment['customer_name'] ?? 'NOT FOUND',
-    'join_condition' => 'cp.customer_id = c.customer_id AND cp.user_id = c.user_id'
-];
+// Add debug info if needed
+if (isset($_GET['debug'])) {
+    $response['debug'] = [
+        'raw_service_name' => $appointment['service_name'],
+        'parsed_service_data' => $serviceData,
+        'doctor_name' => $doctorName,
+        'specialization' => $specialization,
+        'customer_data' => [
+            'name' => $appointment['customer_name'],
+            'email' => $appointment['customer_email'],
+            'phone' => $appointment['customer_phone']
+        ]
+    ];
+}
 
 echo json_encode($response);
