@@ -46,25 +46,34 @@ SELECT
     cp.total_amount,
     cp.service_name,
 
-    c.doctor_name,
-    c.doctor_image,
-    c.specialization,
-    c.qualification,
+    ds.name AS doctor_name,
+    ds.doctor_image,
+    ds.specialization,
+    ds.qualification,
+    ds.leave_dates,
 
     cp.service_reference_id
 
 FROM customer_payment cp
-LEFT JOIN categories c 
-    ON cp.service_reference_id = c.category_id
+LEFT JOIN doctor_schedule ds 
+    ON ds.category_id = cp.service_reference_id
+    AND ds.user_id = cp.user_id
+
 WHERE cp.user_id = :user_id
 ORDER BY cp.appointment_date DESC
 ";
+
 
 $stmt = $pdo->prepare($sql);
 $stmt->bindValue(":user_id", $userId, PDO::PARAM_INT);
 $stmt->execute();
 
 $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+foreach ($records as &$row) {
+    $row["leave_dates"] = $row["leave_dates"]
+        ? json_decode($row["leave_dates"], true)
+        : [];
+}
 
 echo json_encode([
     "success" => true,
