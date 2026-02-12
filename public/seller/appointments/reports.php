@@ -9,9 +9,7 @@ require_once "../../../src/database.php";
 
 $pdo = getDbConnection();
 
-/* ---------------------------
-   AUTH USING TOKEN COOKIE
----------------------------- */
+/* ---------------- AUTH ---------------- */
 
 $token = $_COOKIE["token"] ?? null;
 
@@ -31,36 +29,20 @@ if (!$user) {
 
 $userId = $user["user_id"];
 
-/* ---------------------------
-   GET FILTER PARAMETERS
----------------------------- */
-
-$limit = isset($_GET["limit"]) ? (int)$_GET["limit"] : 10;
-$page = isset($_GET["page"]) ? (int)$_GET["page"] : 1;
-$offset = ($page - 1) * $limit;
+/* ---------------- FILTER PARAMS ---------------- */
 
 $q = $_GET["q"] ?? "";
 $status = $_GET["status"] ?? "";
-$paymentStatus = $_GET["paymentStatus"] ?? "";
 $paymentMethod = $_GET["paymentMethod"] ?? "";
 $fromDate = $_GET["fromDate"] ?? "";
 $toDate = $_GET["toDate"] ?? "";
 $date = $_GET["date"] ?? "";
 $doctor = $_GET["doctor"] ?? "";
-$customer_id = $_GET["customer_id"] ?? null;
 
-/* ---------------------------
-   BUILD DYNAMIC WHERE
----------------------------- */
+/* ---------------- WHERE BUILD ---------------- */
 
 $where = " WHERE cp.user_id = :user_id ";
 $params = [":user_id" => $userId];
-
-/* Customer Filter */
-if (!empty($customer_id)) {
-    $where .= " AND cp.customer_id = :customer_id ";
-    $params[":customer_id"] = $customer_id;
-}
 
 /* Search */
 if (!empty($q)) {
@@ -78,12 +60,6 @@ if (!empty($status)) {
     $params[":status"] = $status;
 }
 
-/* Payment Status */
-if (!empty($paymentStatus)) {
-    $where .= " AND cp.status = :paymentStatus ";
-    $params[":paymentStatus"] = $paymentStatus;
-}
-
 /* Payment Method */
 if (!empty($paymentMethod)) {
     $where .= " AND cp.payment_method = :paymentMethod ";
@@ -92,13 +68,15 @@ if (!empty($paymentMethod)) {
 
 /* Doctor Filter */
 if (!empty($doctor) && $doctor !== "all") {
-   $where .= " AND (
-    c.doctor_name LIKE :doctor
-    OR cp.service_name LIKE :doctor
-    OR JSON_EXTRACT(cp.service_name, '$.doctor_name') LIKE :doctor
+$where .= " AND (
+    c.doctor_name = :doctor
+    OR cp.service_name = :doctor
+    OR (
+        cp.service_name LIKE '{%' AND
+        JSON_UNQUOTE(JSON_EXTRACT(cp.service_name, '$.doctor_name')) = :doctor
+    )
 )";
-
-    $params[":doctor"] = "%$doctor%";
+    $params[":doctor"] = $doctor;
 }
 
 /* Date Range */
@@ -108,9 +86,8 @@ if (!empty($fromDate) && !empty($toDate)) {
     $params[":toDate"] = $toDate;
 }
 
-/* Quick Date Filters */
+/* Quick Date */
 switch ($date) {
-
     case "today":
         $where .= " AND DATE(cp.appointment_date) = CURDATE() ";
         break;
@@ -120,63 +97,32 @@ switch ($date) {
         break;
 
     case "this_week":
-        $where .= " AND YEARWEEK(cp.appointment_date, 1) = YEARWEEK(CURDATE(), 1) ";
+        $where .= " AND YEARWEEK(cp.appointment_date,1)=YEARWEEK(CURDATE(),1) ";
         break;
 
     case "this_month":
-        $where .= " AND MONTH(cp.appointment_date) = MONTH(CURDATE())
-                    AND YEAR(cp.appointment_date) = YEAR(CURDATE()) ";
+        $where .= " AND MONTH(cp.appointment_date)=MONTH(CURDATE())
+                    AND YEAR(cp.appointment_date)=YEAR(CURDATE()) ";
         break;
 
     case "this_year":
-        $where .= " AND YEAR(cp.appointment_date) = YEAR(CURDATE()) ";
-        break;
-
-    default:
+        $where .= " AND YEAR(cp.appointment_date)=YEAR(CURDATE()) ";
         break;
 }
 
-/* ---------------------------
-   COUNT TOTAL RECORDS
----------------------------- */
-
-$countSql = "
-SELECT COUNT(*) as total
-FROM customer_payment cp
-LEFT JOIN categories c 
-    ON cp.service_reference_id = c.category_id
-$where
-";
-
-$countStmt = $pdo->prepare($countSql);
-
-foreach ($params as $key => $val) {
-    $countStmt->bindValue($key, $val);
-}
-
-$countStmt->execute();
-$totalRecords = $countStmt->fetch(PDO::FETCH_ASSOC)["total"] ?? 0;
-$totalPages = $limit > 0 ? ceil($totalRecords / $limit) : 1;
-
-/* ---------------------------
-   FETCH DATA
----------------------------- */
+/* ---------------- REPORT QUERY ---------------- */
 
 $sql = "
 SELECT 
-    cp.*,
-    c.doctor_name,
-    c.specialization,
-    c.qualification,
-    c.experience,
-    c.reg_number,
-    c.doctor_image
+    COUNT(*) as totalAppointments,
+    SUM(cp.total_amount) as totalAmount,
+    SUM(CASE WHEN cp.status='paid' THEN cp.total_amount ELSE 0 END) as paidAmount,
+    SUM(CASE WHEN cp.status='pending' THEN cp.total_amount ELSE 0 END) as pendingAmount,
+    SUM(cp.gst_amount) as gstAmount
 FROM customer_payment cp
 LEFT JOIN categories c 
     ON cp.service_reference_id = c.category_id
 $where
-ORDER BY cp.created_at DESC
-LIMIT :limit OFFSET :offset
 ";
 
 $stmt = $pdo->prepare($sql);
@@ -185,19 +131,15 @@ foreach ($params as $key => $val) {
     $stmt->bindValue($key, $val);
 }
 
-$stmt->bindValue(":limit", $limit, PDO::PARAM_INT);
-$stmt->bindValue(":offset", $offset, PDO::PARAM_INT);
-
 $stmt->execute();
-$records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$result = $stmt->fetch(PDO::FETCH_ASSOC);
 
-/* ---------------------------
-   RESPONSE
----------------------------- */
+/* Prevent null */
 
 echo json_encode([
-    "success" => true,
-    "records" => $records,
-    "totalRecords" => (int)$totalRecords,
-    "totalPages" => (int)$totalPages,
+    "totalAppointments" => (int)($result["totalAppointments"] ?? 0),
+    "totalAmount" => (float)($result["totalAmount"] ?? 0),
+    "paidAmount" => (float)($result["paidAmount"] ?? 0),
+    "pendingAmount" => (float)($result["pendingAmount"] ?? 0),
+    "gstAmount" => (float)($result["gstAmount"] ?? 0),
 ]);
