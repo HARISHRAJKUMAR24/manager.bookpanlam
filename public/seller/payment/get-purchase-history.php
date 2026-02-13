@@ -29,19 +29,54 @@ if (!$user) {
 
 $userId = $user["user_id"];
 
-// Get company info from settings for currency
-$settingsSql = "SELECT currency FROM settings LIMIT 1";
-$settingsStmt = $pdo->prepare($settingsSql);
-$settingsStmt->execute();
-$companyInfo = $settingsStmt->fetch(PDO::FETCH_ASSOC);
-$currency = $companyInfo['currency'] ?? 'INR';
-$currency_symbol = getCurrencySymbol($currency);
+// First, check if user has ANY subscription history
+$checkSubscription = $pdo->prepare("SELECT COUNT(*) as count FROM subscription_histories WHERE user_id = ?");
+$checkSubscription->execute([$userId]);
+$subscriptionCount = $checkSubscription->fetch(PDO::FETCH_ASSOC);
 
-// Get all subscription histories for this user
+// If no subscription history at all - show purchase plan message
+if (!$subscriptionCount || $subscriptionCount['count'] == 0) {
+    echo json_encode([
+        "success" => true,
+        "data" => [],
+        "count" => 0,
+        "has_subscription" => false,
+        "message" => "No subscription found"
+    ]);
+    exit;
+}
+
+// Check if customer payments exist
+$checkPayments = $pdo->prepare("SELECT COUNT(*) as count FROM customer_payment WHERE user_id = ? AND status = 'paid'");
+$checkPayments->execute([$userId]);
+$paymentCount = $checkPayments->fetch(PDO::FETCH_ASSOC);
+$hasCustomerPayments = ($paymentCount && $paymentCount['count'] > 0);
+
+// If NO customer payments - return empty array (hide subscription invoices as per requirement)
+if (!$hasCustomerPayments) {
+    echo json_encode([
+        "success" => true,
+        "data" => [],
+        "count" => 0,
+        "has_subscription" => true,
+        "has_customer_payments" => false,
+        "message" => "No customer payments found - subscription invoices hidden"
+    ]);
+    exit;
+}
+
+// ONLY IF CUSTOMER PAYMENTS EXIST, get and show subscription history
 $sql = "SELECT 
-            sh.*,
-            sp.name as plan_name,
-            sp.duration as plan_duration
+            sh.id,
+            sh.invoice_number,
+            COALESCE(sp.name, 'Subscription Plan') as plan_name,
+            sh.amount,
+            sh.payment_method,
+            sh.payment_id,
+            sh.created_at,
+            sh.name as customer_name,
+            sh.email as customer_email,
+            '₹' as currency_symbol
         FROM subscription_histories sh
         LEFT JOIN subscription_plans sp ON sh.plan_id = sp.id
         WHERE sh.user_id = ?
@@ -49,61 +84,37 @@ $sql = "SELECT
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute([$userId]);
-$histories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Process each history to calculate proper GST breakdown
-foreach ($histories as &$history) {
-    $totalAmount = intval($history['amount']);
-    $gstPercentage = intval($history['gst_percentage'] ?? 0);
-    $gstType = $history['gst_type'] ?? 'inclusive';
-    $gstAmount = intval($history['gst_amount'] ?? 0);
-    $discount = intval($history['discount'] ?? 0);
-    
-    // Calculate GST based on type if not already calculated
-    if ($gstType === 'exclusive' && $gstAmount === 0 && $gstPercentage > 0) {
-        // GST = (Total Amount * GST%) / (100 + GST%)
-        $gstAmount = round(($totalAmount * $gstPercentage) / (100 + $gstPercentage));
-        $history['gst_amount'] = $gstAmount;
-    }
-    
-    // Calculate GST components based on state
-    $customerState = $history['state'] ?? '';
-    $companyState = "Tamil Nadu"; // Company is in Tamil Nadu
-    $isSameState = strcasecmp(trim($customerState), trim($companyState)) === 0;
-    
-    $sgstAmount = 0;
-    $cgstAmount = 0;
-    $igstAmount = 0;
-    
-    if ($gstType === 'exclusive' && $gstAmount > 0) {
-        if ($isSameState) {
-            // For same state: CGST + SGST (50% each)
-            $sgstAmount = round($gstAmount / 2);
-            $cgstAmount = $gstAmount - $sgstAmount;
-        } else {
-            // For different state: IGST (full amount)
-            $igstAmount = $gstAmount;
-        }
-    }
-    
-    // Calculate base amount
-    $baseAmount = $totalAmount - $gstAmount;
-    $baseAmountAfterDiscount = $baseAmount - $discount;
-    $finalTotal = $baseAmountAfterDiscount + $gstAmount;
-    
-    // Add calculated fields to the history
-    $history['calculated_gst_amount'] = $gstAmount;
-    $history['calculated_sgst'] = $sgstAmount;
-    $history['calculated_cgst'] = $cgstAmount;
-    $history['calculated_igst'] = $igstAmount;
-    $history['calculated_base_amount'] = $baseAmountAfterDiscount;
-    $history['calculated_final_total'] = $finalTotal;
-    $history['currency_symbol'] = $currency_symbol;
-    $history['is_same_state'] = $isSameState;
+// Format for frontend
+$formatted = [];
+foreach ($subscriptions as $sub) {
+    $formatted[] = [
+        'id' => (int)$sub['id'],
+        'invoice_number' => (string)$sub['invoice_number'],
+        'plan_name' => (string)$sub['plan_name'],
+        'amount' => (int)$sub['amount'],
+        'currency_symbol' => '₹',
+        'payment_method' => (string)$sub['payment_method'],
+        'payment_id' => (string)$sub['payment_id'],
+        'created_at' => (string)$sub['created_at'],
+        'status' => 'Paid',
+        'name' => (string)$sub['customer_name'],
+        'email' => (string)$sub['customer_email'],
+        'purchase_type' => 'Subscription'
+    ];
 }
 
-// Format the response with calculated GST fields
 echo json_encode([
     "success" => true,
-    "data" => $histories
+    "data" => $formatted,
+    "count" => count($formatted),
+    "has_subscription" => true,
+    "has_customer_payments" => true,
+    "debug" => [
+        "user_id" => $userId,
+        "subscription_exists" => true,
+        "customer_payments_found" => $paymentCount['count'],
+        "subscription_invoices_shown" => count($formatted)
+    ]
 ]);

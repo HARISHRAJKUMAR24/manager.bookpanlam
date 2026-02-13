@@ -1,625 +1,639 @@
 <?php
-// manager.bookpanlam/public/seller/payment/generate-invoice-pdf.php
+error_reporting(E_ALL);
+ini_set('display_errors', 0);
+
+// Clean output buffer
+while (ob_get_level()) {
+    ob_end_clean();
+}
+
 header("Access-Control-Allow-Origin: http://localhost:3000");
 header("Access-Control-Allow-Credentials: true");
-header("Content-Type: text/html");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-require_once "../../../config/config.php";
-require_once "../../../src/database.php";
-require_once "../../../src/functions.php";
-
-$pdo = getDbConnection();
-
-// Auth by token
-$token = $_COOKIE["token"] ?? null;
-
-if (!$token) {
-    echo json_encode(["success" => false, "message" => "Unauthorized"]);
-    exit;
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
 }
 
-$stmt = $pdo->prepare("SELECT user_id FROM users WHERE api_token = ? LIMIT 1");
-$stmt->execute([$token]);
-$user = $stmt->fetch(PDO::FETCH_ASSOC);
+try {
+    require_once "../../../config/config.php";
+    require_once "../../../src/database.php";
+    require_once "../../../src/functions.php";
+    require_once "../../../vendor/fpdf/fpdf.php";
 
-if (!$user) {
-    echo json_encode(["success" => false, "message" => "Invalid token"]);
-    exit;
-}
+    $pdo = getDbConnection();
 
-$userId = $user["user_id"];
+    // ================= AUTH =================
+    $token = $_COOKIE["token"] ?? null;
 
-// Get invoice number from query parameter
-$invoiceNumber = isset($_GET['invoice']) ? intval($_GET['invoice']) : 0;
-
-if (!$invoiceNumber) {
-    echo json_encode(["success" => false, "message" => "Invoice number is required"]);
-    exit;
-}
-
-// Get payment details from subscription_histories
-$sql = "SELECT 
-            sh.*,
-            sp.name as plan_name,
-            sp.duration as plan_duration,
-            u.email as user_email,
-            u.name as user_name,
-            u.phone as user_phone
-        FROM subscription_histories sh
-        LEFT JOIN subscription_plans sp ON sh.plan_id = sp.id
-        LEFT JOIN users u ON sh.user_id = u.user_id
-        WHERE sh.invoice_number = ? AND sh.user_id = ?";
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$invoiceNumber, $userId]);
-$paymentDetails = $stmt->fetch(PDO::FETCH_ASSOC);
-
-if (!$paymentDetails) {
-    echo json_encode(["success" => false, "message" => "Invoice not found"]);
-    exit;
-}
-
-// Get company info from settings
-$settingsSql = "SELECT 
-                    app_name, 
-                    address, 
-                    logo, 
-                    gst_number as company_gst_number,
-                    currency,
-                    email,
-                    phone
-                FROM settings 
-                LIMIT 1";
-$settingsStmt = $pdo->prepare($settingsSql);
-$settingsStmt->execute();
-$companyInfo = $settingsStmt->fetch(PDO::FETCH_ASSOC);
-
-// Get currency symbol
-$currency = $companyInfo['currency'] ?? 'INR';
-$currency_symbol = getCurrencySymbol($currency);
-
-// Calculate GST breakdown based on state
-$customerState = $paymentDetails['state'] ?? '';
-$companyState = "Tamil Nadu";
-$isSameState = strcasecmp(trim($customerState), trim($companyState)) === 0;
-
-$totalAmount = intval($paymentDetails['amount']);
-$gstPercentage = intval($paymentDetails['gst_percentage']);
-$discount = intval($paymentDetails['discount']);
-
-// Calculate GST based on GST type
-$gstAmount = 0;
-$baseAmount = 0;
-
-if ($paymentDetails['gst_type'] === 'exclusive') {
-    $gstAmount = round(($totalAmount * $gstPercentage) / (100 + $gstPercentage));
-    $baseAmount = $totalAmount - $gstAmount;
-} else {
-    $gstAmount = intval($paymentDetails['gst_amount']);
-    $baseAmount = $totalAmount - $gstAmount;
-}
-
-// Calculate GST components
-$sgstAmount = 0;
-$cgstAmount = 0;
-$igstAmount = 0;
-
-if ($paymentDetails['gst_type'] === 'exclusive' && $gstAmount > 0) {
-    if ($isSameState) {
-        $sgstAmount = round($gstAmount / 2);
-        $cgstAmount = $gstAmount - $sgstAmount;
-    } else {
-        $igstAmount = $gstAmount;
-    }
-}
-
-// Apply discount to base amount
-$baseAmountAfterDiscount = $baseAmount - $discount;
-$finalTotal = $baseAmountAfterDiscount + $gstAmount;
-
-// Amount in words
-function amountInWords($number)
-{
-    $no = round($number);
-    $point = round($number - $no, 2) * 100;
-
-    if ($no == 0) {
-        return "Zero INR";
+    if (!$token) {
+        throw new Exception("Unauthorized");
     }
 
-    $hundred = null;
-    $digits_1 = strlen($no);
-    $i = 0;
-    $str = array();
-    $words = array(
-        '0' => '',
-        '1' => 'One',
-        '2' => 'Two',
-        '3' => 'Three',
-        '4' => 'Four',
-        '5' => 'Five',
-        '6' => 'Six',
-        '7' => 'Seven',
-        '8' => 'Eight',
-        '9' => 'Nine',
-        '10' => 'Ten',
-        '11' => 'Eleven',
-        '12' => 'Twelve',
-        '13' => 'Thirteen',
-        '14' => 'Fourteen',
-        '15' => 'Fifteen',
-        '16' => 'Sixteen',
-        '17' => 'Seventeen',
-        '18' => 'Eighteen',
-        '19' => 'Nineteen',
-        '20' => 'Twenty',
-        '30' => 'Thirty',
-        '40' => 'Forty',
-        '50' => 'Fifty',
-        '60' => 'Sixty',
-        '70' => 'Seventy',
-        '80' => 'Eighty',
-        '90' => 'Ninety'
-    );
+    $stmt = $pdo->prepare("SELECT user_id, email FROM users WHERE api_token = ? LIMIT 1");
+    $stmt->execute([$token]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    $digits = array('', 'Hundred', 'Thousand', 'Lakh', 'Crore');
-
-    while ($i < $digits_1) {
-        $divider = ($i == 2) ? 10 : 100;
-        $number = floor($no % $divider);
-        $no = floor($no / $divider);
-        $i += ($divider == 10) ? 1 : 2;
-
-        if ($number) {
-            $plural = (($counter = count($str)) && $number > 9) ? 's' : null;
-            $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
-            $str[] = ($number < 21) ? $words[$number] .
-                " " . $digits[$counter] . $plural . " " . $hundred
-                :
-                $words[floor($number / 10) * 10]
-                . " " . $words[$number % 10] . " "
-                . $digits[$counter] . $plural . " " . $hundred;
-        } else $str[] = null;
+    if (!$user) {
+        throw new Exception("Invalid token");
     }
 
-    $str = array_reverse($str);
-    $result = implode('', $str);
-    $result = preg_replace('/\s+/', ' ', trim($result));
-    $points = ($point > 0) ? " and " . $words[$point] . " Paise" : "";
+    $userId = $user["user_id"];
+    $userEmail = $user["email"] ?? "N/A";
 
-    return ucfirst($result) . " INR" . $points;
+    // ================= INVOICE NUMBER =================
+    $invoiceNumber = isset($_GET['invoice']) ? intval($_GET['invoice']) : 0;
+
+    if (!$invoiceNumber) {
+        throw new Exception("Invoice number is required");
+    }
+
+    // ================= COMPANY INFO =================
+    $companyName = "1Milestone Technology Solution Private Limited";
+    $companyAddress = "Tamilnadu, India";
+    $companyEmail = "admin@1milestonetech.com";
+    $companyPhone = "+919363601020";
+    $companyGST = "33AACCZ2135N1Z8";
+    $companyHSN = "998315";
+    $currency_symbol = "RS";
+
+    // ================= INVOICE DATA =================
+    $sql = "SELECT 
+                sh.invoice_number,
+                sh.plan_id,
+                sh.payment_method,
+                sh.payment_id,
+                sh.amount,
+                sh.gst_amount,
+                sh.gst_type,
+                sh.gst_percentage,
+                sh.gst_number,
+                sh.discount,
+                sh.name,
+                sh.phone,
+                sh.address_1,
+                sh.address_2,
+                sh.state,
+                sh.city,
+                sh.pin_code,
+                sh.country,
+                sh.created_at,
+                sp.name as plan_name,
+                sp.duration as plan_duration
+            FROM subscription_histories sh
+            LEFT JOIN subscription_plans sp ON sh.plan_id = sp.id
+            WHERE sh.invoice_number = ? AND sh.user_id = ?";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$invoiceNumber, $userId]);
+    $history = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$history) {
+        throw new Exception("Invoice not found");
+    }
+
+    // ================= GST CALCULATIONS =================
+    $totalAmount = intval($history['amount'] ?? 0);
+    $gstPercentage = intval($history['gst_percentage'] ?? 0);
+    $gstType = $history['gst_type'] ?? 'inclusive';
+    $gstAmount = intval($history['gst_amount'] ?? 0);
+    $discount = intval($history['discount'] ?? 0);
+
+    $subtotal = $totalAmount - $gstAmount;
+    $finalTotal = $totalAmount;
+
+    if ($discount > 0) {
+        $subtotal = $subtotal - $discount;
+        $finalTotal = $finalTotal - $discount;
+    }
+
+    // Check if same state for GST breakdown
+    $customerState = $history['state'] ?? '';
+    $companyState = "Tamil Nadu";
+    $isSameState = strcasecmp(trim($customerState), trim($companyState)) === 0;
+
+    // Calculate GST components
+    $sgstAmount = 0;
+    $cgstAmount = 0;
+    $igstAmount = 0;
+
+    if ($gstType === 'exclusive' && $gstAmount > 0) {
+        if ($isSameState) {
+            $sgstAmount = round($gstAmount / 2);
+            $cgstAmount = $gstAmount - $sgstAmount;
+        } else {
+            $igstAmount = $gstAmount;
+        }
+    }
+
+    // ================= DATES =================
+    $createdDate = new DateTime($history['created_at'] ?? date("Y-m-d"));
+    $createdFormatted = $createdDate->format("d M Y");
+    $dueDate = clone $createdDate;
+    $dueDate->modify("+30 days");
+    $dueFormatted = $dueDate->format("d M Y");
+    $expiryDate = clone $createdDate;
+    $expiryDate->modify("+" . intval($history['plan_duration'] ?? 30) . " days");
+    $expiryFormatted = $expiryDate->format("d M Y");
+
+    // ================= AMOUNT IN WORDS =================
+    function amountInWords($number)
+    {
+        $no = round($number);
+        $point = round($number - $no, 2) * 100;
+
+        if ($no == 0) {
+            return "Zero Rupees";
+        }
+
+        $words = array(
+            '0' => '',
+            '1' => 'One',
+            '2' => 'Two',
+            '3' => 'Three',
+            '4' => 'Four',
+            '5' => 'Five',
+            '6' => 'Six',
+            '7' => 'Seven',
+            '8' => 'Eight',
+            '9' => 'Nine',
+            '10' => 'Ten',
+            '11' => 'Eleven',
+            '12' => 'Twelve',
+            '13' => 'Thirteen',
+            '14' => 'Fourteen',
+            '15' => 'Fifteen',
+            '16' => 'Sixteen',
+            '17' => 'Seventeen',
+            '18' => 'Eighteen',
+            '19' => 'Nineteen',
+            '20' => 'Twenty',
+            '30' => 'Thirty',
+            '40' => 'Forty',
+            '50' => 'Fifty',
+            '60' => 'Sixty',
+            '70' => 'Seventy',
+            '80' => 'Eighty',
+            '90' => 'Ninety'
+        );
+
+        $digits = array('', 'Hundred', 'Thousand', 'Lakh', 'Crore');
+        $digits_1 = strlen($no);
+        $i = 0;
+        $str = array();
+
+        while ($i < $digits_1) {
+            $divider = ($i == 2) ? 10 : 100;
+            $number = floor($no % $divider);
+            $no = floor($no / $divider);
+            $i += ($divider == 10) ? 1 : 2;
+
+            if ($number) {
+                $plural = (($counter = count($str)) && $number > 9) ? 's' : null;
+                $hundred = ($counter == 1 && $str[0]) ? ' and ' : null;
+                $str[] = ($number < 21) ? $words[$number] . " " . $digits[$counter] . $plural . " " . $hundred
+                    : $words[floor($number / 10) * 10] . " " . $words[$number % 10] . " " . $digits[$counter] . $plural . " " . $hundred;
+            } else $str[] = null;
+        }
+
+        $str = array_reverse($str);
+        $result = implode('', $str);
+        $result = preg_replace('/\s+/', ' ', trim($result));
+        $points = ($point > 0) ? " and " . ($point < 21 ? $words[$point] : $words[floor($point / 10) * 10] . " " . $words[$point % 10]) . " Paise" : "";
+
+        return ucfirst($result) . " Rupees" . $points . " Only";
+    }
+
+    $amountInWords = amountInWords($finalTotal);
+
+    // ================= CREATE PDF =================
+    class PDF extends FPDF
+    {
+        function Header()
+        {
+            // No header needed
+        }
+        function Footer()
+        {
+            // No footer needed
+        }
+    }
+
+    $pdf = new PDF();
+    $pdf->AddPage();
+    $pdf->SetAutoPageBreak(true, 20);
+    $pdf->SetMargins(20, 15, 20);
+    $pdf->SetFont('Arial', '', 10);
+
+    // ========== SECTION 1: Company Header ==========
+    $pdf->SetFont('Arial', 'B', 22);
+    $pdf->SetTextColor(41, 71, 121); // Dark blue
+    $pdf->Cell(0, 12, $companyName, 0, 1, 'C');
+
+    // Elegant divider line
+    $pdf->SetDrawColor(70, 130, 200); // Steel blue
+    $pdf->SetLineWidth(0.3);
+    $lineWidth = 100;
+    $pdf->Line(($pdf->GetPageWidth() - $lineWidth) / 2, $pdf->GetY(), ($pdf->GetPageWidth() + $lineWidth) / 2, $pdf->GetY());
+    $pdf->Ln(3);
+
+    $pdf->SetFont('Arial', '', 10);
+    $pdf->SetTextColor(100, 100, 100);
+    $pdf->Cell(0, 5, $companyAddress, 0, 1, 'C');
+    $pdf->Ln(8);
+    $pdf->SetTextColor(0, 0, 0);
+
+    // ========== SECTION 2: Payment Status and Invoice Details ==========
+    $leftColX = 20;
+    $rightColX = 125;
+    $startY = $pdf->GetY();
+
+    // Left side - Payment Status with badge style
+    $pdf->SetXY($leftColX, $startY);
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->Cell(35, 6, 'Payment Status:', 0, 0);
+
+    // PAID badge
+    $pdf->SetFillColor(39, 174, 96); // Green
+    $pdf->SetTextColor(255, 255, 255);
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->Cell(20, 6, 'PAID', 0, 1, 'C', true);
+    $pdf->SetTextColor(0, 0, 0);
+
+    // Other payment details
+    $pdf->SetX($leftColX);
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->Cell(35, 6, 'Place of Supply:', 0, 0);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->Cell(0, 6, $history['state'] ?? 'Delhi', 0, 1);
+
+    $pdf->SetX($leftColX);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->Cell(35, 6, 'Country of Supply:', 0, 0);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->Cell(0, 6, $history['country'] ?? 'India', 0, 1);
+
+    $pdf->SetX($leftColX);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->Cell(35, 6, 'Payment Method:', 0, 0);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->Cell(0, 6, strtoupper($history['payment_method'] ?? 'RAZORPAY'), 0, 1);
+
+    $pdf->SetX($leftColX);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->Cell(35, 6, 'Payment ID:', 0, 0);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('Arial', '', 8);
+    $pdf->Cell(0, 6, $history['payment_id'] ?? 'pay_SFL8pzvDkHhgFe', 0, 1);
+    $pdf->SetFont('Arial', '', 9);
+
+    // Right side - Invoice Details
+    $pdf->SetXY($rightColX, $startY);
+    $pdf->SetFont('Arial', 'B', 20);
+    $pdf->SetTextColor(41, 71, 121);
+    $pdf->Cell(0, 10, 'INVOICE #' . $invoiceNumber, 0, 1, 'R');
+
+    // IMPORTANT: Reset font here
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(0, 0, 0);
+
+    $pdf->SetFont('Arial', '', 9);
+$pdf->SetTextColor(0, 0, 0);
+
+// Date
+$pdf->SetX($rightColX);
+$pdf->Cell(0, 6, 'Date: ' . $createdFormatted, 0, 1, 'R');
+
+// Due Date
+$pdf->SetX($rightColX);
+$pdf->Cell(0, 6, 'Due Date: ' . $dueFormatted, 0, 1, 'R');
+
+    $pdf->Ln(12);
+
+    // ========== SECTION 3: Company and Customer Information Side by Side ==========
+
+$currentY = $pdf->GetY();
+$leftColX = 20;
+$rightColX = 115;
+
+// ----- LEFT COLUMN: COMPANY INFORMATION -----
+$pdf->SetXY($leftColX, $currentY);
+$pdf->SetFont('Arial', 'B', 12);
+$pdf->SetTextColor(41, 71, 121);
+$pdf->Cell(45, 8, 'Company Information', 0, 1);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Ln(2);
+
+$companyBoxY = $pdf->GetY();
+
+// ----- RIGHT COLUMN TITLE -----
+$pdf->SetXY($rightColX, $currentY);
+$pdf->SetFont('Arial', 'B', 12);
+$pdf->SetTextColor(41, 71, 121);
+$pdf->Cell(45, 8, 'Customer Information', 0, 1);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Ln(2);
+
+$customerBoxY = $pdf->GetY();
+
+
+// ===== CALCULATE BOX HEIGHTS =====
+
+$companyBoxHeight = 48; // fixed company content height
+
+$customerBoxHeight = 62;
+if (!empty($history['address_2'])) $customerBoxHeight += 5;
+if (!empty($history['gst_number'])) $customerBoxHeight += 5;
+
+// Use same height for both
+$boxHeight = max($companyBoxHeight, $customerBoxHeight);
+
+
+// ===== DRAW BOTH BOXES =====
+
+$pdf->SetDrawColor(200, 200, 200);
+$pdf->SetFillColor(250, 250, 252);
+
+$pdf->Rect($leftColX, $companyBoxY, 88, $boxHeight, 'FD');
+$pdf->Rect($rightColX, $customerBoxY, 75, $boxHeight, 'FD');
+
+
+// ===== COMPANY CONTENT =====
+
+$pdf->SetXY($leftColX + 5, $companyBoxY + 5);
+
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Name:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $companyName, 0, 1);
+
+$pdf->SetX($leftColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Address:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $companyAddress, 0, 1);
+
+$pdf->SetX($leftColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Email:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $companyEmail, 0, 1);
+
+$pdf->SetX($leftColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Phone:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $companyPhone, 0, 1);
+
+$pdf->SetX($leftColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'GST:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $companyGST, 0, 1);
+
+$pdf->SetX($leftColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'HSN:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $companyHSN, 0, 1);
+
+
+// ===== CUSTOMER CONTENT =====
+
+$pdf->SetXY($rightColX + 5, $customerBoxY + 5);
+
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Name:', 0, 0);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $history['name'], 0, 1);
+
+$pdf->SetX($rightColX + 5);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Address:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->MultiCell(52, 5, $history['address_1']);
+
+
+if (!empty($history['address_2'])) {
+    $pdf->SetX($rightColX + 23);
+    $pdf->Cell(0, 5, $history['address_2'], 0, 1);
 }
 
-$amountInWords = amountInWords($finalTotal);
+$pdf->SetX($rightColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'City:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $history['city'], 0, 1);
 
-// Calculate expiry date
-$startDate = new DateTime($paymentDetails['created_at']);
-$expiryDate = clone $startDate;
-$expiryDate->modify('+' . $paymentDetails['plan_duration'] . ' days');
+$pdf->SetX($rightColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'State:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $history['state'], 0, 1);
 
-// Set filename for download
-$filename = "invoice-{$invoiceNumber}.pdf";
+$pdf->SetX($rightColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Pin Code:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $history['pin_code'], 0, 1);
 
-// HTML Template for PDF
-?>
-<!DOCTYPE html>
-<html>
+$pdf->SetX($rightColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Country:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $history['country'], 0, 1);
 
-<head>
-    <meta charset="UTF-8">
-    <title>Invoice #<?php echo $invoiceNumber; ?></title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+$pdf->SetX($rightColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Email:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $userEmail, 0, 1);
+
+$pdf->SetX($rightColX + 5);
+$pdf->SetFont('Arial', 'B', 8);
+$pdf->SetTextColor(80, 80, 80);
+$pdf->Cell(18, 5, 'Phone:', 0, 0);
+$pdf->SetFont('Arial', '', 8);
+$pdf->SetTextColor(0, 0, 0);
+$pdf->Cell(0, 5, $history['phone'], 0, 1);
+
+if (!empty($history['gst_number'])) {
+    $pdf->SetX($rightColX + 5);
+    $pdf->SetFont('Arial', 'B', 8);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->Cell(18, 5, 'GST:', 0, 0);
+    $pdf->SetFont('Arial', '', 8);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell(0, 5, $history['gst_number'], 0, 1);
+}
+
+
+// ===== MOVE BELOW BOXES =====
+
+$pdf->SetY($companyBoxY + $boxHeight + 15);
+
+
+    // ========== SECTION 5: Amount Summary ==========
+    $summaryX = $pdf->GetPageWidth() - 95;
+    $pdf->SetX($summaryX);
+    $pdf->SetFont('Arial', 'B', 14);
+    $pdf->SetTextColor(41, 71, 121); // Dark blue
+    $pdf->Cell(75, 8, 'Amount Summary', 0, 1, 'L');
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Ln(2);
+
+    // Subtotal
+    $pdf->SetX($summaryX);
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->Cell(45, 7, 'Subtotal:', 0, 0, 'L');
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->Cell(30, 7, $currency_symbol . ' ' . number_format($subtotal, 2), 0, 1, 'R');
+
+    // Discount
+    if ($discount > 0) {
+        $pdf->SetX($summaryX);
+        $pdf->SetFont('Arial', '', 9);
+        $pdf->SetTextColor(80, 80, 80);
+        $pdf->Cell(45, 7, 'Discount:', 0, 0, 'L');
+        $pdf->SetTextColor(39, 174, 96); // Green
+        $pdf->Cell(30, 7, '-' . $currency_symbol . ' ' . number_format($discount, 2), 0, 1, 'R');
+        $pdf->SetTextColor(0, 0, 0);
+    }
+
+    // GST Breakdown
+    if ($gstAmount > 0) {
+        if ($gstType === 'exclusive' && $isSameState && $cgstAmount > 0 && $sgstAmount > 0) {
+            $pdf->SetX($summaryX);
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->Cell(45, 7, 'CGST (' . ($gstPercentage / 2) . '%):', 0, 0, 'L');
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(30, 7, $currency_symbol . ' ' . number_format($cgstAmount, 2), 0, 1, 'R');
+
+            $pdf->SetX($summaryX);
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->Cell(45, 7, 'SGST (' . ($gstPercentage / 2) . '%):', 0, 0, 'L');
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(30, 7, $currency_symbol . ' ' . number_format($sgstAmount, 2), 0, 1, 'R');
+        } elseif ($gstType === 'exclusive' && !$isSameState && $igstAmount > 0) {
+            $pdf->SetX($summaryX);
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->Cell(45, 7, 'IGST (' . $gstPercentage . '%):', 0, 0, 'L');
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(30, 7, $currency_symbol . ' ' . number_format($igstAmount, 2), 0, 1, 'R');
+        } else {
+            $pdf->SetX($summaryX);
+            $pdf->SetFont('Arial', '', 9);
+            $pdf->SetTextColor(80, 80, 80);
+            $pdf->Cell(45, 7, 'GST (' . $gstPercentage . '%):', 0, 0, 'L');
+            $pdf->SetTextColor(0, 0, 0);
+            $pdf->Cell(30, 7, $currency_symbol . ' ' . number_format($gstAmount, 2), 0, 1, 'R');
         }
+    }
 
-        body {
-            font-family: 'Helvetica', 'Arial', sans-serif;
-            background: white;
-            padding: 40px;
-            color: #1e293b;
-        }
+    // Divider line
+    $pdf->Ln(2);
+    $pdf->SetX($summaryX);
+    $pdf->SetDrawColor(200, 200, 200);
+    $pdf->Line($pdf->GetX(), $pdf->GetY(), $pdf->GetX() + 75, $pdf->GetY());
+    $pdf->Ln(4);
 
-        .invoice-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: white;
-            padding: 30px;
-        }
+    // Total Amount
+    $pdf->SetX($summaryX);
+    $pdf->SetFont('Arial', 'B', 12);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->Cell(45, 8, 'Total Amount:', 0, 0, 'L');
+    $pdf->SetTextColor(41, 71, 121); // Dark blue
+    $pdf->SetFont('Arial', 'B', 14);
+    $pdf->Cell(30, 8, $currency_symbol . ' ' . number_format($finalTotal, 2), 0, 1, 'R');
+    $pdf->SetTextColor(0, 0, 0);
 
-        .text-center {
-            text-align: center;
-        }
+    // ========== SECTION 6: Footer ==========
+    $pdf->Ln(15);
+    $pdf->SetDrawColor(200, 200, 200);
+    $pdf->Line($pdf->GetX(), $pdf->GetY(), $pdf->GetPageWidth() - 20, $pdf->GetY());
+    $pdf->Ln(8);
 
-        .text-right {
-            text-align: right;
-        }
+    // Amount in words
+    $pdf->SetFont('Arial', 'B', 9);
+    $pdf->SetTextColor(80, 80, 80);
+    $pdf->Cell(38, 6, 'Amount In Words:', 0, 0);
+    $pdf->SetFont('Arial', '', 9);
+    $pdf->SetTextColor(0, 0, 0);
+    $pdf->MultiCell(0, 6, $amountInWords, 0, 'L');
+    $pdf->Ln(4);
 
-        .company-name {
-            font-size: 28px;
-            font-weight: bold;
-            color: #1e293b;
-            margin-bottom: 10px;
-        }
+    // Computer generated notice
+    $pdf->SetFont('Arial', 'I', 8);
+    $pdf->SetTextColor(150, 150, 150);
+    $pdf->Cell(0, 4, 'This is a computer generated invoice. No signature is required.', 0, 1, 'C');
+    $pdf->Ln(8);
 
-        .divider {
-            width: 200px;
-            height: 1px;
-            background: #cbd5e1;
-            margin: 15px auto;
-        }
+    // Thank you message
+    $pdf->SetFont('Arial', 'B', 18);
+    $pdf->SetTextColor(41, 71, 121); // Dark blue
+    $pdf->Cell(0, 10, 'Thank you for your business!', 0, 1, 'C');
 
-        .company-address {
-            color: #64748b;
-            font-size: 14px;
-            margin-bottom: 30px;
-        }
+    // ========== OUTPUT PDF ==========
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
 
-        .status-paid {
-            background: #dcfce7;
-            color: #166534;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-weight: bold;
-            display: inline-block;
-            font-size: 14px;
-        }
+    header('Content-Type: application/pdf');
+    header('Content-Disposition: attachment; filename="invoice-' . $invoiceNumber . '.pdf"');
+    header('Cache-Control: private, max-age=0, must-revalidate');
+    header('Pragma: public');
 
-        .invoice-title {
-            font-size: 24px;
-            font-weight: bold;
-            color: #1e293b;
-            margin-bottom: 15px;
-        }
+    $pdf->Output('D', 'invoice-' . $invoiceNumber . '.pdf');
+    exit;
+} catch (Exception $e) {
+    while (ob_get_level()) {
+        ob_end_clean();
+    }
 
-        .section-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #1e293b;
-            border-bottom: 1px solid #cbd5e1;
-            padding-bottom: 8px;
-            margin-bottom: 15px;
-        }
-
-        .info-box {
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 20px;
-            height: 100%;
-        }
-
-        .info-row {
-            margin-bottom: 8px;
-            font-size: 13px;
-        }
-
-        .info-label {
-            font-weight: bold;
-            color: #475569;
-            display: inline-block;
-            width: 80px;
-        }
-
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
-
-        .table th {
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            padding: 12px;
-            text-align: left;
-            font-weight: bold;
-            color: #1e293b;
-        }
-
-        .table td {
-            border: 1px solid #cbd5e1;
-            padding: 12px;
-            font-size: 14px;
-        }
-
-        .amount-right {
-            text-align: right;
-        }
-
-        .summary-table {
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .summary-table td {
-            padding: 8px;
-        }
-
-        .total-row {
-            border-top: 1px solid #94a3b8;
-            font-weight: bold;
-        }
-
-        .grand-total {
-            font-size: 18px;
-            color: #2563eb;
-        }
-
-        .amount-words {
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 30px 0;
-            font-size: 14px;
-        }
-
-        .footer {
-            text-align: center;
-            border-top: 1px solid #cbd5e1;
-            padding-top: 30px;
-            margin-top: 30px;
-        }
-
-        .footer-text {
-            font-style: italic;
-            color: #64748b;
-            margin-bottom: 10px;
-        }
-
-        .thankyou {
-            font-size: 20px;
-            font-weight: bold;
-            color: #1e293b;
-        }
-
-        @media print {
-            body {
-                padding: 20px;
-            }
-
-            .no-print {
-                display: none;
-            }
-        }
-    </style>
-</head>
-
-<body>
-    <div class="invoice-container">
-        <!-- Company Name -->
-        <div class="text-center">
-            <div class="company-name"><?php echo $companyInfo['app_name'] ?? '1Milestone Technology Solution Private Limited'; ?></div>
-            <div class="divider"></div>
-            <div class="company-address"><?php echo $companyInfo['address'] ?? 'Tamilnadu, India'; ?></div>
-        </div>
-
-        <!-- Status and Invoice Details -->
-        <table width="100%" cellpadding="5" cellspacing="0">
-            <tr>
-                <td width="50%" valign="top">
-                    <table cellpadding="3" cellspacing="0">
-                        <tr>
-                            <td width="120"><strong>Payment Status:</strong></td>
-                            <td><span class="status-paid">PAID</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Place of Supply:</strong></td>
-                            <td><?php echo $paymentDetails['state'] ?? 'Tamil Nadu'; ?></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Country of Supply:</strong></td>
-                            <td>India</td>
-                        </tr>
-                        <tr>
-                            <td><strong>Payment Method:</strong></td>
-                            <td><?php echo strtoupper($paymentDetails['payment_method']); ?></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Payment ID:</strong></td>
-                            <td style="font-family: monospace;"><?php echo $paymentDetails['payment_id']; ?></td>
-                        </tr>
-                    </table>
-                </td>
-                <td width="50%" valign="top" class="text-right">
-                    <div class="invoice-title">INVOICE #<?php echo $invoiceNumber; ?></div>
-                    <table cellpadding="3" cellspacing="0" style="float: right;">
-                        <tr>
-                            <td><strong>Date:</strong></td>
-                            <td><?php echo date('d M Y', strtotime($paymentDetails['created_at'])); ?></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Due Date:</strong></td>
-                            <td><?php echo date('d M Y', strtotime('+30 days', strtotime($paymentDetails['created_at']))); ?></td>
-                        </tr>
-                    </table>
-                </td>
-            </tr>
-        </table>
-
-        <div style="height: 20px;"></div>
-
-        <!-- Company and Customer Info -->
-        <table width="100%" cellpadding="0" cellspacing="0">
-            <tr>
-                <td width="50%" style="padding-right: 10px;" valign="top">
-                    <div class="info-box">
-                        <div class="section-title">Company Information</div>
-                        <div class="info-row">
-                            <span class="info-label">Name:</span>
-                            <?php echo $companyInfo['app_name'] ?? '1Milestone Technology Solution Private Limited'; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Address:</span>
-                            <?php echo $companyInfo['address'] ?? 'Tamilnadu, India'; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Email:</span>
-                            <?php echo $companyInfo['email'] ?? 'admin@1milestonetech.com'; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Phone:</span>
-                            <?php echo $companyInfo['phone'] ?? '+919363601020'; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">GST:</span>
-                            <?php echo $companyInfo['company_gst_number'] ?? '33AACCZ2135N1Z8'; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">HSN:</span>
-                            998315
-                        </div>
-                    </div>
-                </td>
-                <td width="50%" style="padding-left: 10px;" valign="top">
-                    <div class="info-box">
-                        <div class="section-title">Customer Information</div>
-                        <div class="info-row">
-                            <span class="info-label">Name:</span>
-                            <?php echo $paymentDetails['name']; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Address:</span>
-                            <?php echo $paymentDetails['address_1']; ?>
-                        </div>
-                        <?php if ($paymentDetails['address_2']): ?>
-                            <div class="info-row">
-                                <span class="info-label">Address 2:</span>
-                                <?php echo $paymentDetails['address_2']; ?>
-                            </div>
-                        <?php endif; ?>
-                        <div class="info-row">
-                            <span class="info-label">City:</span>
-                            <?php echo $paymentDetails['city']; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">State:</span>
-                            <?php echo $paymentDetails['state']; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Postal:</span>
-                            <?php echo $paymentDetails['pin_code']; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Country:</span>
-                            <?php echo $paymentDetails['country']; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Email:</span>
-                            <?php echo $paymentDetails['email']; ?>
-                        </div>
-                        <div class="info-row">
-                            <span class="info-label">Phone:</span>
-                            <?php echo $paymentDetails['phone']; ?>
-                        </div>
-                        <?php if ($paymentDetails['gst_number']): ?>
-                            <div class="info-row">
-                                <span class="info-label">GST:</span>
-                                <?php echo $paymentDetails['gst_number']; ?>
-                            </div>
-                        <?php endif; ?>
-                    </div>
-                </td>
-            </tr>
-        </table>
-
-        <!-- Items Table -->
-        <table class="table">
-            <thead>
-                <tr>
-                    <th style="width: 50%;">Plan Name</th>
-                    <th style="width: 25%;">Expiry Date</th>
-                    <th style="width: 25%;" class="amount-right">Amount</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><?php echo $paymentDetails['plan_name'] ?? 'Subscription Plan'; ?></td>
-                    <td><?php echo $expiryDate->format('d M Y'); ?></td>
-                    <td class="amount-right"><?php echo $currency_symbol . number_format($finalTotal); ?></td>
-                </tr>
-            </tbody>
-        </table>
-
-        <!-- Amount Summary -->
-        <table class="summary-table" style="float: right; width: 300px;">
-            <tr>
-                <td><strong>Subtotal</strong></td>
-                <td class="amount-right"><?php echo $currency_symbol . number_format($baseAmountAfterDiscount); ?></td>
-            </tr>
-
-            <?php if ($discount > 0): ?>
-                <tr>
-                    <td><strong>Discount</strong></td>
-                    <td class="amount-right" style="color: #16a34a;">-<?php echo $currency_symbol . number_format($discount); ?></td>
-                </tr>
-            <?php endif; ?>
-
-            <?php if ($paymentDetails['gst_type'] === 'exclusive' && $gstAmount > 0): ?>
-                <?php if ($cgstAmount > 0 && $sgstAmount > 0): ?>
-                    <tr>
-                        <td>CGST (<?php echo $gstPercentage / 2; ?>%)</td>
-                        <td class="amount-right"><?php echo $currency_symbol . number_format($cgstAmount); ?></td>
-                    </tr>
-                    <tr>
-                        <td>SGST (<?php echo $gstPercentage / 2; ?>%)</td>
-                        <td class="amount-right"><?php echo $currency_symbol . number_format($sgstAmount); ?></td>
-                    </tr>
-                <?php endif; ?>
-
-                <?php if ($igstAmount > 0): ?>
-                    <tr>
-                        <td>IGST (<?php echo $gstPercentage; ?>%)</td>
-                        <td class="amount-right"><?php echo $currency_symbol . number_format($igstAmount); ?></td>
-                    </tr>
-                <?php endif; ?>
-
-                <tr style="border-top: 1px solid #cbd5e1;">
-                    <td><strong>Total GST</strong></td>
-                    <td class="amount-right"><strong><?php echo $currency_symbol . number_format($gstAmount); ?></strong></td>
-                </tr>
-            <?php endif; ?>
-
-            <?php if ($paymentDetails['gst_type'] === 'inclusive' && $gstAmount > 0): ?>
-                <tr>
-                    <td>GST (<?php echo $gstPercentage; ?>% Inclusive)</td>
-                    <td class="amount-right"><?php echo $currency_symbol . number_format($gstAmount); ?></td>
-                </tr>
-            <?php endif; ?>
-
-            <tr style="border-top: 2px solid #94a3b8;">
-                <td><strong style="font-size: 16px;">Total Amount</strong></td>
-                <td class="amount-right"><strong style="font-size: 16px; color: #2563eb;"><?php echo $currency_symbol . number_format($finalTotal); ?></strong></td>
-            </tr>
-        </table>
-
-        <div style="clear: both;"></div>
-
-        <!-- Amount in Words -->
-        <div class="amount-words">
-            <strong>Amount In Words:</strong> <?php echo $amountInWords; ?>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-            <div class="footer-text">
-                This is a computer generated invoice and does not require a physical signature.
-            </div>
-            <div class="thankyou">
-                Thank you for your business!
-            </div>
-        </div>
-    </div>
-
-    <!-- Print Script -->
-    <script>
-        window.onload = function() {
-            window.print();
-        };
-    </script>
-</body>
-
-</html>
-<?php
-?>
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        "success" => false,
+        "message" => $e->getMessage()
+    ]);
+    exit;
+}

@@ -1421,3 +1421,102 @@ function canShowUPI($user_id) {
     // Show UPI only if under limit
     return $current_count < $limit;
 }
+
+
+
+//============================================================================//
+/**
+ * Get subscription purchase history ONLY when customer payments exist
+ * This shows seller's subscription invoices only if they have received customer payments
+ */
+function getSubscriptionPurchaseHistory($pdo, $userId) {
+    try {
+        $currency_symbol = '₹';
+        
+        // First check if this seller has ANY customer payments
+        $checkCustomerSql = "SELECT COUNT(*) as payment_count 
+                            FROM customer_payment 
+                            WHERE user_id = ? AND status = 'paid'";
+        $checkStmt = $pdo->prepare($checkCustomerSql);
+        $checkStmt->execute([$userId]);
+        $customerPayments = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If no customer payments, return empty array (no subscription invoices shown)
+        if (!$customerPayments || $customerPayments['payment_count'] == 0) {
+            error_log("No customer payments found for user: " . $userId . " - hiding subscription invoices");
+            return [];
+        }
+        
+        // Only get subscription histories if customer payments exist
+        $sql = "SELECT 
+                    sh.id,
+                    sh.invoice_number,
+                    sh.plan_id,
+                    COALESCE(sp.name, 'Subscription Plan') as plan_name,
+                    sh.amount,
+                    sh.payment_method,
+                    sh.payment_id,
+                    sh.created_at,
+                    sh.name as customer_name,
+                    sh.email as customer_email,
+                    sh.phone,
+                    sh.address_1,
+                    sh.state,
+                    sh.city,
+                    sh.pin_code,
+                    sh.gst_amount,
+                    sh.gst_percentage,
+                    sh.gst_type,
+                    sh.discount,
+                    ? as currency_symbol,
+                    cp.customer_id,
+                    cp.appointment_id,
+                    cp.appointment_date,
+                    cp.service_name
+                FROM subscription_histories sh
+                LEFT JOIN subscription_plans sp ON sh.plan_id = sp.id
+                LEFT JOIN customer_payment cp ON cp.user_id = sh.user_id AND cp.status = 'paid'
+                WHERE sh.user_id = ?
+                GROUP BY sh.id
+                ORDER BY sh.created_at DESC";
+        
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$currency_symbol, $userId]);
+        $subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Format for frontend
+        $result = [];
+        foreach ($subscriptions as $sub) {
+            $result[] = [
+                'id' => (int)$sub['id'],
+                'invoice_number' => (string)$sub['invoice_number'],
+                'plan_name' => (string)$sub['plan_name'],
+                'amount' => (int)$sub['amount'],
+                'currency_symbol' => (string)$sub['currency_symbol'],
+                'payment_method' => (string)$sub['payment_method'],
+                'payment_id' => (string)$sub['payment_id'],
+                'created_at' => (string)$sub['created_at'],
+                'status' => 'Paid',
+                'name' => (string)$sub['customer_name'],
+                'email' => (string)$sub['customer_email'],
+                'purchase_type' => 'Subscription',
+                'phone' => $sub['phone'] ?? '',
+                'address' => $sub['address_1'] ?? '',
+                'state' => $sub['state'] ?? '',
+                'city' => $sub['city'] ?? '',
+                'pin_code' => $sub['pin_code'] ?? '',
+                'gst_amount' => (int)($sub['gst_amount'] ?? 0),
+                'gst_percentage' => (int)($sub['gst_percentage'] ?? 0),
+                'gst_type' => $sub['gst_type'] ?? 'inclusive',
+                'discount' => (int)($sub['discount'] ?? 0),
+                'has_customer_payments' => true
+            ];
+        }
+        
+        return $result;
+        
+    } catch (PDOException $e) {
+        error_log("Error in getSubscriptionPurchaseHistory: " . $e->getMessage());
+        return [];
+    }
+}
