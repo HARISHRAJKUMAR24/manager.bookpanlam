@@ -1,6 +1,6 @@
 <?php
 // public/coupons/validate-coupon.php
-header("Access-Control-Allow-Origin: http://localhost:3001");
+header("Access-Control-Allow-Origin: https://bookpanlam.com");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With");
@@ -11,7 +11,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-// Adjust path based on your file structure
 require_once "../../../config/config.php";
 require_once "../../../src/database.php";
 
@@ -27,6 +26,7 @@ if (!$input) {
 
 $coupon_code = isset($input['coupon_code']) ? trim($input['coupon_code']) : '';
 $user_id = isset($input['user_id']) ? intval($input['user_id']) : 0;
+$customer_id = isset($input['customer_id']) ? intval($input['customer_id']) : 0; // 👈 NEW
 $total_amount = isset($input['total_amount']) ? floatval($input['total_amount']) : 0;
 
 if (empty($coupon_code) || $user_id <= 0) {
@@ -38,7 +38,7 @@ if (empty($coupon_code) || $user_id <= 0) {
 $current_date = date('Y-m-d H:i:s');
 
 try {
-    // First, try exact match
+    // First, get the coupon
     $sql = "SELECT * FROM coupons 
             WHERE user_id = :user_id 
             AND code = :code
@@ -61,7 +61,32 @@ try {
         exit();
     }
 
-    // Check usage limit
+    // 👇 NEW: Check if this customer has already used this coupon
+    if ($customer_id > 0) {
+        $checkUsageSql = "SELECT COUNT(*) as used_count FROM customer_payment 
+                         WHERE user_id = :user_id 
+                         AND customer_id = :customer_id 
+                         AND coupon_id = :coupon_id 
+                         AND coupon_used = 1";
+        
+        $checkStmt = $pdo->prepare($checkUsageSql);
+        $checkStmt->execute([
+            ':user_id' => $user_id,
+            ':customer_id' => $customer_id,
+            ':coupon_id' => $coupon['coupon_id']
+        ]);
+        $usage = $checkStmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($usage['used_count'] > 0) {
+            echo json_encode([
+                "success" => false, 
+                "message" => "You have already used this coupon"
+            ]);
+            exit();
+        }
+    }
+
+    // Check usage limit (global)
     if ($coupon['usage_limit'] !== null && $coupon['usage_limit'] <= 0) {
         echo json_encode([
             "success" => false, 

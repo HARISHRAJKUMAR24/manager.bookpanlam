@@ -1,8 +1,8 @@
 <?php
-// manager.bookpanlam/public/customers/payment/upi-payment.php
+// managerbp/public/customers/payment/upi-payment.php
 
-header("Access-Control-Allow-Origin: http://localhost:3000");
-header("Access-Control-Allow-Origin: http://localhost:3001");
+header("Access-Control-Allow-Origin: https://web.bookpanlam.com");
+header("Access-Control-Allow-Origin: https://bookpanlam.com");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -209,52 +209,10 @@ try {
     if ($success) {
         $payment_id = $db->lastInsertId();
         
-        // Update token availability if batch_id exists
-        if ($batch_id && $appointment_date && $service_ref_id) {
-            try {
-                $batchParts = explode(':', $batch_id);
-                if (count($batchParts) === 2) {
-                    $dayIndex = intval($batchParts[0]);
-                    $slotIndex = intval($batchParts[1]);
-                    
-                    $dayName = date('D', strtotime($appointment_date));
-                    
-                    $stmtDoctor = $db->prepare("
-                        SELECT weekly_schedule 
-                        FROM doctor_schedule 
-                        WHERE category_id = ? 
-                        AND user_id = ?
-                        LIMIT 1
-                    ");
-                    $stmtDoctor->execute([$service_ref_id, $user_id]);
-                    $doctor = $stmtDoctor->fetch(PDO::FETCH_ASSOC);
-                    
-                    if ($doctor && $doctor['weekly_schedule']) {
-                        $weeklySchedule = json_decode($doctor['weekly_schedule'], true);
-                        
-                        if (isset($weeklySchedule[$dayName]['slots'][$slotIndex])) {
-                            $currentTokens = intval($weeklySchedule[$dayName]['slots'][$slotIndex]['token'] ?? 0);
-                            $newTokens = max(0, $currentTokens - $token_count);
-                            $weeklySchedule[$dayName]['slots'][$slotIndex]['token'] = strval($newTokens);
-                            
-                            $updateSchedule = $db->prepare("
-                                UPDATE doctor_schedule 
-                                SET weekly_schedule = ? 
-                                WHERE category_id = ? 
-                                AND user_id = ?
-                            ");
-                            $updateSchedule->execute([
-                                json_encode($weeklySchedule),
-                                $service_ref_id,
-                                $user_id
-                            ]);
-                        }
-                    }
-                }
-            } catch (Exception $e) {
-                error_log("UPI Batch token update error: " . $e->getMessage());
-            }
-        }
+        /* -------------------------------
+           ⭐ TOKEN UPDATE SECTION - COMPLETELY REMOVED
+           No token subtraction from doctor_schedule for UPI
+        -------------------------------- */
         
         // Return success response with JSON service info
         echo json_encode([
@@ -265,6 +223,7 @@ try {
             "receipt" => $receipt,
             "status" => "pending",
             "payment_method" => "upi",
+            "token_update" => "Token subtraction disabled for UPI - no changes to doctor_schedule",
             "service_info" => [
                 "reference_id" => $service_ref_id,
                 "reference_type" => $service_ref_type,

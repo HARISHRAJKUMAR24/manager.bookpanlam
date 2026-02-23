@@ -1038,14 +1038,13 @@ function getServiceInformation($db, $user_id, $service_type, $category_id = null
 function checkTokenAvailability($userId, $batchId, $appointmentDate, $pdo = null)
 {
     try {
-        // If no PDO connection provided, create one
         if ($pdo === null) {
             require_once __DIR__ . "/config.php";
             require_once __DIR__ . "/database.php";
             $pdo = getDbConnection();
         }
 
-        // Step 1: Get doctor's schedule to find token limit for this batch
+        // Get doctor's schedule to find token limit for this batch
         $scheduleStmt = $pdo->prepare("
             SELECT token_limit, weekly_schedule 
             FROM doctor_schedule 
@@ -1066,7 +1065,7 @@ function checkTokenAvailability($userId, $batchId, $appointmentDate, $pdo = null
 
         $tokenLimit = (int)$doctor['token_limit'];
 
-        // Step 2: Parse weekly schedule to get token for this specific batch
+        // Parse weekly schedule to get token for this specific batch
         $weeklySchedule = !empty($doctor['weekly_schedule'])
             ? json_decode($doctor['weekly_schedule'], true)
             : [];
@@ -1096,7 +1095,7 @@ function checkTokenAvailability($userId, $batchId, $appointmentDate, $pdo = null
             ];
         }
 
-        // Step 3: Count how many appointments are already booked for this batch and date
+        // Count how many appointments are already booked for this batch and date
         $bookingStmt = $pdo->prepare("
             SELECT SUM(token_count) as total_booked 
             FROM customer_payment 
@@ -1111,10 +1110,10 @@ function checkTokenAvailability($userId, $batchId, $appointmentDate, $pdo = null
 
         $bookedCount = (int)($result['total_booked'] ?? 0);
 
-        // Step 4: Calculate remaining tokens
+        // Calculate remaining tokens
         $remainingTokens = max(0, $batchToken - $bookedCount);
 
-        // Step 5: Determine availability
+        // Determine availability
         $isAvailable = $remainingTokens > 0;
 
         return [
@@ -1360,12 +1359,12 @@ function compareAndLogTokenUpdates($oldSchedule, $newSchedule, $scheduleId, $pdo
     }
 }
 
-
 // ---------------------- Check if COH should be shown to user ---------------------- //
 // ---------------------- Check if COH should be shown based on user's plan limit ---------------------- //
-function canShowCOH($user_id) {
+function canShowCOH($user_id)
+{
     $pdo = getDbConnection();
-    
+
     // Get user's plan
     $stmt = $pdo->prepare("
         SELECT u.plan_id, sp.manual_payment_methods_limit 
@@ -1375,27 +1374,28 @@ function canShowCOH($user_id) {
     ");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     // If no plan or unlimited, show COH
     if (!$user || $user['manual_payment_methods_limit'] === 'unlimited') {
         return true;
     }
-    
+
     // ✅ FIXED: Check current count of CASH payments in customer_payment table
     $limit = (int)$user['manual_payment_methods_limit'];
     $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM customer_payment WHERE user_id = ? AND payment_method = 'cash'");
     $stmt->execute([$user_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $current_count = $result['count'] ?? 0;
-    
+
     // Show COH only if under limit
     return $current_count < $limit;
 }
 
 // ---------------------- Check if UPI should be shown based on user's plan limit ---------------------- //
-function canShowUPI($user_id) {
+function canShowUPI($user_id)
+{
     $pdo = getDbConnection();
-    
+
     // Get user's plan
     $stmt = $pdo->prepare("
         SELECT u.plan_id, sp.upi_payment_methods_limit 
@@ -1405,19 +1405,19 @@ function canShowUPI($user_id) {
     ");
     $stmt->execute([$user_id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    
+
     // If no plan or unlimited, show UPI
     if (!$user || $user['upi_payment_methods_limit'] === 'unlimited') {
         return true;
     }
-    
+
     // ✅ FIXED: Check current count of UPI payments in customer_payment table
     $limit = (int)$user['upi_payment_methods_limit'];
     $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM customer_payment WHERE user_id = ? AND payment_method = 'upi'");
     $stmt->execute([$user_id]);
     $result = $stmt->fetch(PDO::FETCH_ASSOC);
     $current_count = $result['count'] ?? 0;
-    
+
     // Show UPI only if under limit
     return $current_count < $limit;
 }
@@ -1429,10 +1429,11 @@ function canShowUPI($user_id) {
  * Get subscription purchase history ONLY when customer payments exist
  * This shows seller's subscription invoices only if they have received customer payments
  */
-function getSubscriptionPurchaseHistory($pdo, $userId) {
+function getSubscriptionPurchaseHistory($pdo, $userId)
+{
     try {
         $currency_symbol = '₹';
-        
+
         // First check if this seller has ANY customer payments
         $checkCustomerSql = "SELECT COUNT(*) as payment_count 
                             FROM customer_payment 
@@ -1440,13 +1441,13 @@ function getSubscriptionPurchaseHistory($pdo, $userId) {
         $checkStmt = $pdo->prepare($checkCustomerSql);
         $checkStmt->execute([$userId]);
         $customerPayments = $checkStmt->fetch(PDO::FETCH_ASSOC);
-        
+
         // If no customer payments, return empty array (no subscription invoices shown)
         if (!$customerPayments || $customerPayments['payment_count'] == 0) {
             error_log("No customer payments found for user: " . $userId . " - hiding subscription invoices");
             return [];
         }
-        
+
         // Only get subscription histories if customer payments exist
         $sql = "SELECT 
                     sh.id,
@@ -1479,11 +1480,11 @@ function getSubscriptionPurchaseHistory($pdo, $userId) {
                 WHERE sh.user_id = ?
                 GROUP BY sh.id
                 ORDER BY sh.created_at DESC";
-        
+
         $stmt = $pdo->prepare($sql);
         $stmt->execute([$currency_symbol, $userId]);
         $subscriptions = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
+
         // Format for frontend
         $result = [];
         foreach ($subscriptions as $sub) {
@@ -1512,11 +1513,131 @@ function getSubscriptionPurchaseHistory($pdo, $userId) {
                 'has_customer_payments' => true
             ];
         }
-        
+
         return $result;
-        
     } catch (PDOException $e) {
         error_log("Error in getSubscriptionPurchaseHistory: " . $e->getMessage());
         return [];
     }
+}
+
+
+
+
+
+// Add this function to your existing functions.php file
+
+/**
+ * Get available coupons for a user (automatically filters out those that reached usage limit)
+ * 
+ * @param PDO $pdo Database connection
+ * @param int $user_id User ID
+ * @return array Array of available coupons
+ */
+function getAvailableCoupons($pdo, $user_id) {
+
+    $current_date = date('Y-m-d H:i:s');
+
+    $sql = "
+        SELECT *
+        FROM coupons
+        WHERE user_id = :user_id
+        AND start_date <= :current_date
+        AND end_date >= :current_date
+        ORDER BY created_at DESC
+    ";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([
+        ':user_id' => $user_id,
+        ':current_date' => $current_date
+    ]);
+
+    $coupons = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $availableCoupons = [];
+
+    foreach ($coupons as $coupon) {
+
+        // Check usage limit
+        if ($coupon['usage_limit'] !== null) {
+
+            $countSql = "
+                SELECT COUNT(*) as used_count
+                FROM customer_payment
+                WHERE coupon_id COLLATE utf8mb4_unicode_ci = :coupon_id
+                AND coupon_used = 1
+                AND status = 'paid'
+            ";
+
+            $countStmt = $pdo->prepare($countSql);
+            $countStmt->execute([
+                ':coupon_id' => $coupon['coupon_id']
+            ]);
+
+            $used = $countStmt->fetch(PDO::FETCH_ASSOC)['used_count'];
+
+            if ($used >= $coupon['usage_limit']) {
+                continue; // ❌ Hide coupon completely
+            }
+
+            $coupon['remaining_uses'] = $coupon['usage_limit'] - $used;
+        } else {
+            $coupon['remaining_uses'] = null;
+        }
+
+        // Format dates
+        $coupon['formatted_start'] = date('d M Y', strtotime($coupon['start_date']));
+        $coupon['formatted_end']   = date('d M Y', strtotime($coupon['end_date']));
+
+        $availableCoupons[] = $coupon;
+    }
+
+    return [
+        "success" => true,
+        "data" => $availableCoupons,
+        "count" => count($availableCoupons)
+    ];
+}
+/**
+ * Check if a coupon has reached its usage limit
+ * 
+ * @param PDO $pdo Database connection
+ * @param string $coupon_id Coupon ID
+ * @return bool True if limit reached, false otherwise
+ */
+function isCouponLimitReached($pdo, $coupon_id) {
+
+    // Get usage limit
+    $stmt = $pdo->prepare("
+        SELECT usage_limit 
+        FROM coupons 
+        WHERE coupon_id = :coupon_id
+    ");
+    $stmt->execute([':coupon_id' => $coupon_id]);
+    $coupon = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$coupon) {
+        return true;
+    }
+
+    // If unlimited
+    if ($coupon['usage_limit'] === null) {
+        return false;
+    }
+
+    // ✅ COUNT ONLY SUCCESSFUL PAYMENTS (IMPORTANT FIX)
+    $countSql = "
+        SELECT COUNT(*) as used_count
+        FROM customer_payment
+        WHERE coupon_id COLLATE utf8mb4_unicode_ci = :coupon_id
+        AND coupon_used = 1
+        AND status = 'paid'
+    ";
+
+    $countStmt = $pdo->prepare($countSql);
+    $countStmt->execute([':coupon_id' => $coupon_id]);
+    $used = $countStmt->fetch(PDO::FETCH_ASSOC)['used_count'];
+
+    return $used >= $coupon['usage_limit'];
 }

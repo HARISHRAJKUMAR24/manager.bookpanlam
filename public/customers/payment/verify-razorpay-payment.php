@@ -1,12 +1,12 @@
 <?php
-// manager.bookpanlam/public/customers/payment/verify-razorpay-payment.php
+// managerbp/public/customers/payment/verify-razorpay-payment.php
 
 /* -------------------------------
    CORS SETTINGS
 -------------------------------- */
 $allowedOrigins = [
-    "http://localhost:3000",
-    "http://localhost:3001",
+    "https://web.bookpanlam.com",
+    "https://bookpanlam.com",
     "http://localhost"
 ];
 
@@ -328,64 +328,9 @@ if ($rowsUpdated === 0) {
 }
 
 /* -------------------------------
-   UPDATE TOKEN AVAILABILITY FOR THIS BATCH
+   ⭐ TOKEN UPDATE SECTION - COMPLETELY REMOVED
+   No token subtraction from doctor_schedule
 -------------------------------- */
-$tokenUpdateMessage = null;
-if ($batch_id && $appointment_date) {
-    try {
-        // Determine reference ID for token update
-        $reference_id = $serviceInfo['reference_id'];
-
-        // Extract day index and slot index from batch_id
-        $batchParts = explode(':', $batch_id);
-        if (count($batchParts) === 2) {
-            $dayIndex = intval($batchParts[0]);
-            $slotIndex = intval($batchParts[1]);
-
-            // Convert appointment date to day name
-            $dayName = date('D', strtotime($appointment_date));
-
-            // Get doctor schedule (works for both categories and departments)
-            $stmtDoctor = $db->prepare("
-                SELECT weekly_schedule 
-                FROM doctor_schedule 
-                WHERE category_id = ? 
-                AND user_id = ?
-                LIMIT 1
-            ");
-            $stmtDoctor->execute([$reference_id, $user_id]);
-            $doctor = $stmtDoctor->fetch(PDO::FETCH_ASSOC);
-
-            if ($doctor && $doctor['weekly_schedule']) {
-                $weeklySchedule = json_decode($doctor['weekly_schedule'], true);
-
-                if (isset($weeklySchedule[$dayName]['slots'][$slotIndex])) {
-                    $currentTokens = intval($weeklySchedule[$dayName]['slots'][$slotIndex]['token'] ?? 0);
-                    $newTokens = max(0, $currentTokens - $token_count);
-                    $weeklySchedule[$dayName]['slots'][$slotIndex]['token'] = strval($newTokens);
-
-                    // Update the schedule
-                    $updateSchedule = $db->prepare("
-                        UPDATE doctor_schedule 
-                        SET weekly_schedule = ? 
-                        WHERE category_id = ? 
-                        AND user_id = ?
-                    ");
-                    $updateSchedule->execute([
-                        json_encode($weeklySchedule),
-                        $reference_id,
-                        $user_id
-                    ]);
-
-                    $tokenUpdateMessage = "Token availability updated: $currentTokens -> $newTokens";
-                }
-            }
-        }
-    } catch (Exception $e) {
-        error_log("Token update error: " . $e->getMessage());
-        $tokenUpdateMessage = "Token update failed: " . $e->getMessage();
-    }
-}
 
 /* -------------------------------
    SUCCESS RESPONSE
@@ -437,6 +382,6 @@ echo json_encode([
         "batch_id" => $batch_id,
         "service_type" => $service_type
     ],
-    "token_update" => $tokenUpdateMessage ?? "No token update performed"
+    "token_update" => "Token subtraction disabled - no changes to doctor_schedule"
 ]);
 exit;

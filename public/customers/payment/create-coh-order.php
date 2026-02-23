@@ -1,11 +1,11 @@
 <?php
-// manager.bookpanlam/public/customers/payment/create-coh-order.php
+// managerbp/public/customers/payment/create-coh-order.php
 
 /* -------------------------------
    CORS SETTINGS
 -------------------------------- */
-header("Access-Control-Allow-Origin: http://localhost:3000");
-header("Access-Control-Allow-Origin: http://localhost:3001");
+header("Access-Control-Allow-Origin: https://web.bookpanlam.com");
+header("Access-Control-Allow-Origin: https://bookpanlam.com");
 header("Access-Control-Allow-Credentials: true");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
@@ -198,62 +198,10 @@ try {
     if ($success) {
         $payment_id = $db->lastInsertId();
         
-        // ⭐ UPDATE TOKEN AVAILABILITY FOR THIS BATCH
-        $tokenUpdateMessage = null;
-        if ($batch_id && $appointment_date && $reference_id) {
-            try {
-                // Extract day index and slot index from batch_id (format: "dayIndex:slotIndex")
-                $batchParts = explode(':', $batch_id);
-                if (count($batchParts) === 2) {
-                    $dayIndex = intval($batchParts[0]); // 0=Sun, 1=Mon, etc.
-                    $slotIndex = intval($batchParts[1]); // Slot index within that day
-                    
-                    // Convert appointment date to day name
-                    $dayName = date('D', strtotime($appointment_date));
-                    
-                    // Get doctor schedule for this category/department
-                    $stmtDoctor = $db->prepare("
-                        SELECT weekly_schedule 
-                        FROM doctor_schedule 
-                        WHERE category_id = ? 
-                        AND user_id = ?
-                        LIMIT 1
-                    ");
-                    $stmtDoctor->execute([$reference_id, $user_id]);
-                    $doctor = $stmtDoctor->fetch(PDO::FETCH_ASSOC);
-                    
-                    if ($doctor && $doctor['weekly_schedule']) {
-                        $weeklySchedule = json_decode($doctor['weekly_schedule'], true);
-                        
-                        // Reduce token availability for this specific batch
-                        if (isset($weeklySchedule[$dayName]['slots'][$slotIndex])) {
-                            $currentTokens = intval($weeklySchedule[$dayName]['slots'][$slotIndex]['token'] ?? 0);
-                            $newTokens = max(0, $currentTokens - $token_count);
-                            $weeklySchedule[$dayName]['slots'][$slotIndex]['token'] = strval($newTokens);
-                            
-                            // Update the schedule
-                            $updateSchedule = $db->prepare("
-                                UPDATE doctor_schedule 
-                                SET weekly_schedule = ? 
-                                WHERE category_id = ? 
-                                AND user_id = ?
-                            ");
-                            $updateSchedule->execute([
-                                json_encode($weeklySchedule),
-                                $reference_id,
-                                $user_id
-                            ]);
-                            
-                            $tokenUpdateMessage = "Token availability updated for batch $batch_id: $currentTokens -> $newTokens";
-                        }
-                    }
-                }
-            } catch (Exception $e) {
-                // Log error but don't fail the COH creation
-                error_log("COH Batch token update error: " . $e->getMessage());
-                $tokenUpdateMessage = "Token update failed: " . $e->getMessage();
-            }
-        }
+        /* -------------------------------
+           ⭐ TOKEN UPDATE SECTION - COMPLETELY REMOVED
+           No token subtraction from doctor_schedule for COH
+        -------------------------------- */
         
         echo json_encode([
             "success" => true,
@@ -264,7 +212,7 @@ try {
             "status" => "pending",
             "payment_method" => "cash",
             "service_name_json" => $service_name_json,
-            "token_update" => $tokenUpdateMessage ?? "No token update performed",
+            "token_update" => "Token subtraction disabled for COH - no changes to doctor_schedule",
             "data" => [
                 "customer_name" => $customer_name,
                 "customer_phone" => $customer_phone,

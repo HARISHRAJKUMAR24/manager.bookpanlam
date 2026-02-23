@@ -99,60 +99,10 @@ if ($status == "success") {
         }
     }
     
-    // ⭐ UPDATE TOKEN AVAILABILITY FOR THIS BATCH
-    $tokenUpdateMessage = null;
-    if ($batch_id && $udf4 && $category_id) {
-        try {
-            // Extract day index and slot index from batch_id
-            $batchParts = explode(':', $batch_id);
-            if (count($batchParts) === 2) {
-                $dayIndex = intval($batchParts[0]);
-                $slotIndex = intval($batchParts[1]);
-                
-                // Convert appointment date to day name
-                $dayName = date('D', strtotime($udf4));
-                
-                // Get doctor schedule
-                $stmtDoctor = $db->prepare("
-                    SELECT weekly_schedule 
-                    FROM doctor_schedule 
-                    WHERE category_id = ? 
-                    AND user_id = ?
-                    LIMIT 1
-                ");
-                $stmtDoctor->execute([$category_id, $udf3]);
-                $doctor = $stmtDoctor->fetch(PDO::FETCH_ASSOC);
-                
-                if ($doctor && $doctor['weekly_schedule']) {
-                    $weeklySchedule = json_decode($doctor['weekly_schedule'], true);
-                    
-                    // Reduce token availability
-                    if (isset($weeklySchedule[$dayName]['slots'][$slotIndex])) {
-                        $currentTokens = intval($weeklySchedule[$dayName]['slots'][$slotIndex]['token'] ?? 0);
-                        $newTokens = max(0, $currentTokens - $token_count);
-                        $weeklySchedule[$dayName]['slots'][$slotIndex]['token'] = strval($newTokens);
-                        
-                        // Update the schedule
-                        $updateSchedule = $db->prepare("
-                            UPDATE doctor_schedule 
-                            SET weekly_schedule = ? 
-                            WHERE category_id = ? 
-                            AND user_id = ?
-                        ");
-                        $updateSchedule->execute([
-                            json_encode($weeklySchedule),
-                            $category_id,
-                            $udf3
-                        ]);
-                        
-                        $tokenUpdateMessage = "Token availability updated";
-                    }
-                }
-            }
-        } catch (Exception $e) {
-            error_log("PayU Batch token update error: " . $e->getMessage());
-        }
-    }
+    /* -------------------------------
+       ⭐ TOKEN UPDATE SECTION - COMPLETELY REMOVED
+       No token subtraction from doctor_schedule for PayU
+    -------------------------------- */
 
     // ⭐ GET SERVICE DISPLAY NAME FROM JSON
     $serviceDisplay = "Service";
