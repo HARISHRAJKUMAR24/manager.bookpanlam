@@ -31,7 +31,7 @@ function fetchUsers($limit, $offset, $searchValue, $conditions = [])
 {
     $pdo = getDbConnection();
 
-    // Prepare the base SQL query with a JOIN
+    // Prepare the base SQL query with JOIN to subscription_plans
     $sql = "SELECT 
                 u.id, 
                 u.user_id, 
@@ -44,27 +44,41 @@ function fetchUsers($limit, $offset, $searchValue, $conditions = [])
                 u.site_slug, 
                 u.created_at, 
                 u.expires_on, 
-                u.is_suspended, 
+                u.is_suspended,
+                u.plan_id,
+                COALESCE(sp.name, 'No Plan') as plan_name,
                 s.logo, 
                 s.favicon, 
                 s.currency
             FROM users u
             LEFT JOIN site_settings s ON u.id = s.user_id
-            WHERE 1=1"; // Base condition
+            LEFT JOIN subscription_plans sp ON u.plan_id = sp.id
+            WHERE 1=1";
 
-    // Add conditions from the associative array
     $params = [];
-    foreach ($conditions as $key => $value) {
-        if (!empty($value)) { // Check if value is not empty
-            $sql .= " AND u.$key = :$key"; // Add condition to SQL
-            $params[":$key"] = $value; // Prepare parameter binding
+    
+    // Handle is_suspended condition
+    if (isset($conditions['is_suspended']) && $conditions['is_suspended'] !== '') {
+        $sql .= " AND u.is_suspended = :is_suspended";
+        $params[':is_suspended'] = $conditions['is_suspended'];
+    }
+    
+    // Handle plan_id condition - including NULL for "No Plan"
+    // FIX: Check if it's set and not empty string, but allow "NULL" as a valid value
+    if (isset($conditions['plan_id']) && $conditions['plan_id'] !== '') {
+        if ($conditions['plan_id'] === 'no_plan') {
+            // Special case for "No Plan" - users with null plan_id
+            $sql .= " AND u.plan_id IS NULL";
+        } else {
+            $sql .= " AND u.plan_id = :plan_id";
+            $params[':plan_id'] = $conditions['plan_id'];
         }
     }
 
     // Add search value conditions
     if (!empty($searchValue)) {
         $sql .= " AND (u.name LIKE :search OR u.email LIKE :search OR u.user_id LIKE :search OR u.site_name LIKE :search OR u.site_slug LIKE :search)";
-        $params[':search'] = "%$searchValue%"; // Prepare search parameter
+        $params[':search'] = "%$searchValue%";
     }
 
     // Add limit and offset
@@ -77,15 +91,12 @@ function fetchUsers($limit, $offset, $searchValue, $conditions = [])
         $stmt->bindValue($key, $value);
     }
 
-    // Bind limit and offset (using bindValue)
+    // Bind limit and offset
     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
     $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
 
-    // Execute the statement
     $stmt->execute();
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC); // Fetch as an associative array
-
-    return $data;
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 function getTotalUserRecords()

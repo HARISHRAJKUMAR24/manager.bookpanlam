@@ -1,17 +1,23 @@
 $(document).ready(function () {
   var table = $("#kt_table_users").DataTable({
     processing: true,
-    serverSide: true, // Enable server-side processing
-    pageLength: 10, // Default number of records to display
+    serverSide: true,
+    pageLength: 10,
     ordering: false,
     ajax: {
       url: `${BASE_URL}ajax/users/list.php`,
       type: "POST",
       data: function (d) {
         d.search = $("#searchFilter").val();
-
         d.isSuspended = $("#suspendedFilter").val();
-        d.planId = $("#planFilter").val();
+        
+        // Handle plan filter - send special value for "No Plan"
+        let planValue = $("#planFilter").val();
+        if (planValue === "no_plan") {
+          d.planId = "no_plan"; // Send NULL as string to indicate no plan
+        } else {
+          d.planId = planValue;
+        }
       },
     },
     columns: [

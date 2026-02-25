@@ -1534,7 +1534,8 @@ function getSubscriptionPurchaseHistory($pdo, $userId)
  * @param int $user_id User ID
  * @return array Array of available coupons
  */
-function getAvailableCoupons($pdo, $user_id) {
+function getAvailableCoupons($pdo, $user_id)
+{
 
     $current_date = date('Y-m-d H:i:s');
 
@@ -1606,7 +1607,8 @@ function getAvailableCoupons($pdo, $user_id) {
  * @param string $coupon_id Coupon ID
  * @return bool True if limit reached, false otherwise
  */
-function isCouponLimitReached($pdo, $coupon_id) {
+function isCouponLimitReached($pdo, $coupon_id)
+{
 
     // Get usage limit
     $stmt = $pdo->prepare("
@@ -1640,4 +1642,657 @@ function isCouponLimitReached($pdo, $coupon_id) {
     $used = $countStmt->fetch(PDO::FETCH_ASSOC)['used_count'];
 
     return $used >= $coupon['usage_limit'];
+}
+
+//============================================================================//
+//Filter user records based on search and conditions for User Management page
+
+function getFilteredUserRecords($searchValue = '', $conditions = [])
+{
+    $pdo = getDbConnection();
+
+    $sql = "SELECT COUNT(*) as count 
+            FROM users u
+            LEFT JOIN subscription_plans sp ON u.plan_id = sp.id
+            WHERE 1=1";
+
+    $params = [];
+
+    // Handle is_suspended condition
+    if (isset($conditions['is_suspended']) && $conditions['is_suspended'] !== '') {
+        $sql .= " AND u.is_suspended = :is_suspended";
+        $params[':is_suspended'] = $conditions['is_suspended'];
+    }
+
+    // Handle plan_id condition - including NULL for "No Plan"
+    // FIX: Check if it's set and not empty string, but allow "NULL" as a valid value
+    if (isset($conditions['plan_id']) && $conditions['plan_id'] !== '') {
+        if ($conditions['plan_id'] === 'no_plan') {
+            $sql .= " AND u.plan_id IS NULL";
+        } else {
+            $sql .= " AND u.plan_id = :plan_id";
+            $params[':plan_id'] = $conditions['plan_id'];
+        }
+    }
+
+    // Add search value conditions
+    if (!empty($searchValue)) {
+        $sql .= " AND (u.name LIKE :search OR u.email LIKE :search OR u.user_id LIKE :search OR u.site_name LIKE :search OR u.site_slug LIKE :search)";
+        $params[':search'] = "%$searchValue%";
+    }
+
+    $stmt = $pdo->prepare($sql);
+
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value);
+    }
+
+    $stmt->execute();
+    $result = $stmt->fetch(PDO::FETCH_ASSOC);
+    return $result['count'] ?? 0;
+}
+
+
+//============================================================================//
+// ==================== DASHBOARD STATISTICS FUNCTIONS ======================//
+
+/**
+ * Get total sellers count
+ */
+function getTotalSellers($pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM users");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['count'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getTotalSellers: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get new sellers for a specific period
+ * @param string $period 'today', 'this_week', 'this_month', 'last_month'
+ */
+function getNewSellers($pdo, $period = 'this_month')
+{
+    try {
+        $timezone = getAppTimezone();
+        $now = new DateTime('now', new DateTimeZone($timezone));
+
+        switch ($period) {
+            case 'today':
+                $start = $now->format('Y-m-d 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'this_week':
+                // Start from Monday
+                $monday = clone $now;
+                $monday->modify('monday this week');
+                $start = $monday->format('Y-m-d 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'this_month':
+                $start = $now->format('Y-m-01 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'last_month':
+                $lastMonth = clone $now;
+                $lastMonth->modify('first day of last month');
+                $start = $lastMonth->format('Y-m-01 00:00:00');
+
+                $lastMonthEnd = clone $now;
+                $lastMonthEnd->modify('last day of last month');
+                $end = $lastMonthEnd->format('Y-m-d 23:59:59');
+                break;
+
+            default:
+                return 0;
+        }
+
+        // Convert to UTC for database query
+        $utcStart = convertToUTC($start, $timezone);
+        $utcEnd = convertToUTC($end, $timezone);
+
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM users WHERE created_at BETWEEN ? AND ?");
+        $stmt->execute([$utcStart, $utcEnd]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return (int)($result['count'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getNewSellers: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get suspended sellers count
+ */
+function getSuspendedSellers($pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM users WHERE is_suspended = 1");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['count'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getSuspendedSellers: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get total earnings from subscription histories
+ */
+function getTotalEarnings($pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT SUM(amount) as total FROM subscription_histories");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (float)($result['total'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getTotalEarnings: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get earnings for a specific period
+ * @param string $period 'today', 'this_week', 'this_month', 'last_month'
+ */
+function getEarningsByPeriod($pdo, $period = 'this_month')
+{
+    try {
+        $timezone = getAppTimezone();
+        $now = new DateTime('now', new DateTimeZone($timezone));
+
+        switch ($period) {
+            case 'today':
+                $start = $now->format('Y-m-d 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'this_week':
+                $monday = clone $now;
+                $monday->modify('monday this week');
+                $start = $monday->format('Y-m-d 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'this_month':
+                $start = $now->format('Y-m-01 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'last_month':
+                $lastMonth = clone $now;
+                $lastMonth->modify('first day of last month');
+                $start = $lastMonth->format('Y-m-01 00:00:00');
+
+                $lastMonthEnd = clone $now;
+                $lastMonthEnd->modify('last day of last month');
+                $end = $lastMonthEnd->format('Y-m-d 23:59:59');
+                break;
+
+            default:
+                return 0;
+        }
+
+        // Convert to UTC for database query
+        $utcStart = convertToUTC($start, $timezone);
+        $utcEnd = convertToUTC($end, $timezone);
+
+        $stmt = $pdo->prepare("SELECT SUM(amount) as total FROM subscription_histories WHERE created_at BETWEEN ? AND ?");
+        $stmt->execute([$utcStart, $utcEnd]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return (float)($result['total'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getEarningsByPeriod: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get total GST from subscription histories
+ */
+function getTotalGST($pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT SUM(gst_amount) as total FROM subscription_histories WHERE gst_amount IS NOT NULL");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (float)($result['total'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getTotalGST: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get GST for a specific period
+ * @param string $period 'today', 'this_month', 'last_month'
+ */
+function getGSTByPeriod($pdo, $period = 'this_month')
+{
+    try {
+        $timezone = getAppTimezone();
+        $now = new DateTime('now', new DateTimeZone($timezone));
+
+        switch ($period) {
+            case 'today':
+                $start = $now->format('Y-m-d 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'this_month':
+                $start = $now->format('Y-m-01 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'last_month':
+                $lastMonth = clone $now;
+                $lastMonth->modify('first day of last month');
+                $start = $lastMonth->format('Y-m-01 00:00:00');
+
+                $lastMonthEnd = clone $now;
+                $lastMonthEnd->modify('last day of last month');
+                $end = $lastMonthEnd->format('Y-m-d 23:59:59');
+                break;
+
+            default:
+                return 0;
+        }
+
+        // Convert to UTC for database query
+        $utcStart = convertToUTC($start, $timezone);
+        $utcEnd = convertToUTC($end, $timezone);
+
+        $stmt = $pdo->prepare("SELECT SUM(gst_amount) as total FROM subscription_histories WHERE created_at BETWEEN ? AND ? AND gst_amount IS NOT NULL");
+        $stmt->execute([$utcStart, $utcEnd]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return (float)($result['total'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getGSTByPeriod: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Helper function to convert local time to UTC
+ */
+function convertToUTC($datetime, $fromTimezone)
+{
+    try {
+        $date = new DateTime($datetime, new DateTimeZone($fromTimezone));
+        $date->setTimezone(new DateTimeZone('UTC'));
+        return $date->format('Y-m-d H:i:s');
+    } catch (Exception $e) {
+        return $datetime;
+    }
+}
+
+/**
+ * Get all dashboard statistics in one call
+ */
+function getDashboardStatistics($pdo)
+{
+    return [
+        'total_sellers' => getTotalSellers($pdo),
+        'new_sellers_today' => getNewSellers($pdo, 'today'),
+        'new_sellers_this_week' => getNewSellers($pdo, 'this_week'),
+        'new_sellers_this_month' => getNewSellers($pdo, 'this_month'),
+        'new_sellers_last_month' => getNewSellers($pdo, 'last_month'),
+        'suspended_sellers' => getSuspendedSellers($pdo),
+        'total_earnings' => getTotalEarnings($pdo),
+        'earnings_today' => getEarningsByPeriod($pdo, 'today'),
+        'earnings_this_week' => getEarningsByPeriod($pdo, 'this_week'),
+        'earnings_this_month' => getEarningsByPeriod($pdo, 'this_month'),
+        'earnings_last_month' => getEarningsByPeriod($pdo, 'last_month'),
+        'total_gst' => getTotalGST($pdo),
+        'gst_today' => getGSTByPeriod($pdo, 'today'),
+        'gst_this_month' => getGSTByPeriod($pdo, 'this_month'),
+        'gst_last_month' => getGSTByPeriod($pdo, 'last_month')
+    ];
+}
+
+//============================================================================//
+// ==================== SUBSCRIPTION PLAN STATISTICS ========================//
+
+/**
+ * Get count of users on each subscription plan
+ * Returns array with plan names as keys and count as values
+ */
+function getSubscriptionPlanCounts($pdo)
+{
+    try {
+        $sql = "SELECT 
+                    COALESCE(sp.name, 'No Plan') as plan_name,
+                    COUNT(u.id) as user_count
+                FROM users u
+                LEFT JOIN subscription_plans sp ON u.plan_id = sp.id
+                GROUP BY sp.id, sp.name
+                ORDER BY user_count DESC";
+
+        $stmt = $pdo->query($sql);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $planCounts = [];
+        foreach ($results as $row) {
+            $planCounts[$row['plan_name']] = (int)$row['user_count'];
+        }
+
+        return $planCounts;
+    } catch (Exception $e) {
+        error_log("Error in getSubscriptionPlanCounts: " . $e->getMessage());
+        return [];
+    }
+}
+
+/**
+ * Get count of active vs expired subscriptions
+ */
+function getSubscriptionStatusCounts($pdo)
+{
+    try {
+        $timezone = getAppTimezone();
+        $now = new DateTime('now', new DateTimeZone($timezone));
+        $currentDate = $now->format('Y-m-d H:i:s');
+
+        // Convert to UTC for database comparison
+        $utcNow = convertToUTC($currentDate, $timezone);
+
+        $sql = "SELECT 
+                    COUNT(CASE WHEN expires_on > ? OR expires_on IS NULL OR expires_on = '0000-00-00 00:00:00' THEN 1 END) as active_count,
+                    COUNT(CASE WHEN expires_on <= ? AND expires_on != '0000-00-00 00:00:00' AND expires_on IS NOT NULL THEN 1 END) as expired_count
+                FROM users";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([$utcNow, $utcNow]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return [
+            'active' => (int)($result['active_count'] ?? 0),
+            'expired' => (int)($result['expired_count'] ?? 0)
+        ];
+    } catch (Exception $e) {
+        error_log("Error in getSubscriptionStatusCounts: " . $e->getMessage());
+        return ['active' => 0, 'expired' => 0];
+    }
+}
+
+/**
+ * Get detailed plan statistics with percentages
+ */
+function getDetailedPlanStats($pdo)
+{
+    $totalUsers = getTotalSellers($pdo);
+    $planCounts = getSubscriptionPlanCounts($pdo);
+    $statusCounts = getSubscriptionStatusCounts($pdo);
+
+    $stats = [];
+    foreach ($planCounts as $planName => $count) {
+        $percentage = $totalUsers > 0 ? round(($count / $totalUsers) * 100, 1) : 0;
+        $stats[] = [
+            'plan_name' => $planName,
+            'count' => $count,
+            'percentage' => $percentage,
+            'color' => getPlanColor($planName) // Function to assign colors
+        ];
+    }
+
+    return [
+        'plans' => $stats,
+        'total_users' => $totalUsers,
+        'active_subscriptions' => $statusCounts['active'],
+        'expired_subscriptions' => $statusCounts['expired']
+    ];
+}
+
+/**
+ * Helper function to assign colors to plans
+ */
+function getPlanColor($planName)
+{
+    $colors = [
+        'Free' => 'primary',
+        'Welcome' => 'success',
+        'Basic' => 'info',
+        'Premium' => 'warning',
+        'Enterprise' => 'danger',
+        'No Plan' => 'secondary'
+    ];
+
+    foreach ($colors as $key => $color) {
+        if (stripos($planName, $key) !== false) {
+            return $color;
+        }
+    }
+
+    return 'primary'; // Default color
+}
+
+//============================================================================//
+// ==================== PLATFORM EARNINGS STATISTICS =========================//
+
+/**
+ * Get platform earnings statistics from customer_payment table
+ */
+function getPlatformEarningsStats($pdo)
+{
+    try {
+        $timezone = getAppTimezone();
+        $now = new DateTime('now', new DateTimeZone($timezone));
+
+        // Define date ranges
+        $todayStart = $now->format('Y-m-d 00:00:00');
+        $todayEnd = $now->format('Y-m-d 23:59:59');
+
+        $thisWeekStart = clone $now;
+        $thisWeekStart->modify('monday this week');
+        $thisWeekStart = $thisWeekStart->format('Y-m-d 00:00:00');
+
+        $thisMonthStart = $now->format('Y-m-01 00:00:00');
+
+        $lastMonthStart = clone $now;
+        $lastMonthStart->modify('first day of last month');
+        $lastMonthStart = $lastMonthStart->format('Y-m-01 00:00:00');
+
+        $lastMonthEnd = clone $now;
+        $lastMonthEnd->modify('last day of last month');
+        $lastMonthEnd = $lastMonthEnd->format('Y-m-d 23:59:59');
+
+        // Convert to UTC for database queries
+        $utcTodayStart = convertToUTC($todayStart, $timezone);
+        $utcTodayEnd = convertToUTC($todayEnd, $timezone);
+        $utcThisWeekStart = convertToUTC($thisWeekStart, $timezone);
+        $utcThisMonthStart = convertToUTC($thisMonthStart, $timezone);
+        $utcLastMonthStart = convertToUTC($lastMonthStart, $timezone);
+        $utcLastMonthEnd = convertToUTC($lastMonthEnd, $timezone);
+
+        // Total Statistics
+        $totalStats = getPaymentStatsByDateRange($pdo, null, null);
+
+        // Today's Statistics
+        $todayStats = getPaymentStatsByDateRange($pdo, $utcTodayStart, $utcTodayEnd);
+
+        // This Week Statistics
+        $thisWeekStats = getPaymentStatsByDateRange($pdo, $utcThisWeekStart, null);
+
+        // This Month Statistics
+        $thisMonthStats = getPaymentStatsByDateRange($pdo, $utcThisMonthStart, null);
+
+        // Last Month Statistics
+        $lastMonthStats = getPaymentStatsByDateRange($pdo, $utcLastMonthStart, $utcLastMonthEnd);
+
+        return [
+            'total' => $totalStats,
+            'today' => $todayStats,
+            'this_week' => $thisWeekStats,
+            'this_month' => $thisMonthStats,
+            'last_month' => $lastMonthStats
+        ];
+    } catch (Exception $e) {
+        error_log("Error in getPlatformEarningsStats: " . $e->getMessage());
+        return getEmptyPaymentStats();
+    }
+}
+
+/**
+ * Get payment statistics for a specific date range
+ */
+function getPaymentStatsByDateRange($pdo, $startDate = null, $endDate = null)
+{
+    try {
+        $params = [];
+        $dateCondition = "";
+
+        if ($startDate && $endDate) {
+            $dateCondition = "AND created_at BETWEEN :start_date AND :end_date";
+            $params[':start_date'] = $startDate;
+            $params[':end_date'] = $endDate;
+        } elseif ($startDate) {
+            $dateCondition = "AND created_at >= :start_date";
+            $params[':start_date'] = $startDate;
+        } elseif ($endDate) {
+            $dateCondition = "AND created_at <= :end_date";
+            $params[':end_date'] = $endDate;
+        }
+
+        // Total amount (sum of amount column)
+        $totalSql = "SELECT COALESCE(SUM(amount), 0) as total FROM customer_payment WHERE 1=1 $dateCondition";
+        $totalStmt = $pdo->prepare($totalSql);
+        foreach ($params as $key => $value) {
+            $totalStmt->bindValue($key, $value);
+        }
+        $totalStmt->execute();
+        $total = (float)$totalStmt->fetchColumn();
+
+        // Paid amount (status = 'paid')
+        $paidSql = "SELECT COALESCE(SUM(amount), 0) as total FROM customer_payment WHERE status = 'paid' $dateCondition";
+        $paidStmt = $pdo->prepare($paidSql);
+        foreach ($params as $key => $value) {
+            $paidStmt->bindValue($key, $value);
+        }
+        $paidStmt->execute();
+        $paid = (float)$paidStmt->fetchColumn();
+
+        // Unpaid amount (status = 'pending')
+        $unpaidSql = "SELECT COALESCE(SUM(amount), 0) as total FROM customer_payment WHERE status = 'pending' $dateCondition";
+        $unpaidStmt = $pdo->prepare($unpaidSql);
+        foreach ($params as $key => $value) {
+            $unpaidStmt->bindValue($key, $value);
+        }
+        $unpaidStmt->execute();
+        $unpaid = (float)$unpaidStmt->fetchColumn();
+
+        // Count transactions
+        $countSql = "SELECT 
+                        COUNT(*) as total_count,
+                        SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid_count,
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count
+                    FROM customer_payment WHERE 1=1 $dateCondition";
+        $countStmt = $pdo->prepare($countSql);
+        foreach ($params as $key => $value) {
+            $countStmt->bindValue($key, $value);
+        }
+        $countStmt->execute();
+        $counts = $countStmt->fetch(PDO::FETCH_ASSOC);
+
+        // Payment method breakdown
+        $methodSql = "SELECT 
+                        payment_method,
+                        COALESCE(SUM(amount), 0) as total,
+                        COUNT(*) as count
+                    FROM customer_payment 
+                    WHERE 1=1 $dateCondition
+                    GROUP BY payment_method";
+        $methodStmt = $pdo->prepare($methodSql);
+        foreach ($params as $key => $value) {
+            $methodStmt->bindValue($key, $value);
+        }
+        $methodStmt->execute();
+        $methodBreakdown = $methodStmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return [
+            'total' => $total,
+            'paid' => $paid,
+            'unpaid' => $unpaid,
+            'total_count' => (int)($counts['total_count'] ?? 0),
+            'paid_count' => (int)($counts['paid_count'] ?? 0),
+            'pending_count' => (int)($counts['pending_count'] ?? 0),
+            'method_breakdown' => $methodBreakdown,
+            'collection_rate' => $total > 0 ? round(($paid / $total) * 100, 1) : 0
+        ];
+    } catch (Exception $e) {
+        error_log("Error in getPaymentStatsByDateRange: " . $e->getMessage());
+        return getEmptyPaymentStats();
+    }
+}
+
+/**
+ * Get empty payment stats structure
+ */
+function getEmptyPaymentStats()
+{
+    return [
+        'total' => 0,
+        'paid' => 0,
+        'unpaid' => 0,
+        'total_count' => 0,
+        'paid_count' => 0,
+        'pending_count' => 0,
+        'method_breakdown' => [],
+        'collection_rate' => 0
+    ];
+}
+
+/**
+ * Get payment method display name and icon
+ */
+function getPaymentMethodInfo($method)
+{
+    $methods = [
+        'razorpay' => ['name' => 'Razorpay', 'icon' => 'ki-credit-cart', 'color' => 'primary'],
+        'upi' => ['name' => 'UPI', 'icon' => 'ki-phone', 'color' => 'success'],
+        'cash' => ['name' => 'Cash', 'icon' => 'ki-money', 'color' => 'warning'],
+        'card' => ['name' => 'Card', 'icon' => 'ki-card', 'color' => 'info'],
+        'bank' => ['name' => 'Bank Transfer', 'icon' => 'ki-bank', 'color' => 'danger'],
+        'phone pay' => ['name' => 'Phone Pay', 'icon' => 'ki-phone', 'color' => 'success'],
+        'payu' => ['name' => 'PayU', 'icon' => 'ki-credit-cart', 'color' => 'primary'],
+    ];
+
+    $method = strtolower($method);
+    return $methods[$method] ?? ['name' => ucfirst($method), 'icon' => 'ki-credit-cart', 'color' => 'secondary'];
+}
+
+/**
+ * Get recent transactions
+ */
+function getRecentTransactions($pdo, $limit = 10)
+{
+    try {
+        $sql = "SELECT 
+                    cp.*,
+                    u.name as user_name,
+                    u.user_id,
+                    c.name as customer_name
+                FROM customer_payment cp
+                LEFT JOIN users u ON cp.user_id = u.id
+                LEFT JOIN customers c ON cp.customer_id = c.id
+                ORDER BY cp.created_at DESC
+                LIMIT :limit";
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        error_log("Error in getRecentTransactions: " . $e->getMessage());
+        return [];
+    }
 }

@@ -103,6 +103,7 @@ renderTemplate('header');
                                         <label class="form-label fs-6 fw-semibold">Subscription Plan:</label>
                                         <select class="form-select form-select-solid fw-bold" data-kt-select2="true" data-placeholder="Select option" data-allow-clear="true" data-kt-user-table-filter="two-step" data-hide-search="true" id="planFilter">
                                             <option value="">All</option>
+                                             <option value="no_plan">No Plan</option> <!-- Added No Plan option -->
                                             <?php
                                             $data = fetchSubscriptionPlans();
                                             foreach ($data as $row):
