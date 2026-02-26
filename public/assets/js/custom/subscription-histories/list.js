@@ -14,6 +14,7 @@ $(document).ready(function () {
         d.paymentMethodFilter = $("#paymentMethodFilter").val();
         d.startDateFilter = $("#startDateFilter").val();
         d.endDateFilter = $("#endDateFilter").val();
+        d.statusFilter = $("#statusFilter").val();
       }
     },
     columns: [
@@ -23,7 +24,14 @@ $(document).ready(function () {
       { data: "plan_name" },
       { data: "amount" },
       { data: "payment_method" },
-      { data: "payment_id" }
+      { data: "payment_id" },
+      { data: "status" },
+      { 
+        data: null,
+        render: function(data, type, row) {
+          return '<button class="btn btn-sm btn-light btn-active-light-primary delete-subscription" data-id="' + row.id + '">Delete</button>';
+        }
+      }
     ],
     createdRow: function (row, data, dataIndex) {
       // Initialize tooltips
@@ -49,9 +57,171 @@ $(document).ready(function () {
     table.draw();
   });
 
+  // Handle status change with SweetAlert2 confirmation
+  $(document).on('click', '.status-change', function(e) {
+    e.preventDefault();
+    
+    const id = $(this).data('id');
+    const status = $(this).data('status');
+    const $this = $(this);
+    
+    let confirmTitle = 'Change Status';
+    let confirmText = `Are you sure you want to mark this as ${status}?`;
+    let confirmIcon = 'question';
+    
+    if (status === 'refunded') {
+      confirmText = 'Are you sure you want to mark this as refunded? This action can be reversed later.';
+    } else if (status === 'cancelled') {
+      confirmText = 'Are you sure you want to cancel this subscription?';
+    }
+    
+    // Use SweetAlert2 if available, otherwise use confirm
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: confirmTitle,
+        text: confirmText,
+        icon: confirmIcon,
+        showCancelButton: true,
+        confirmButtonColor: '#3085d6',
+        cancelButtonColor: '#d33',
+        confirmButtonText: 'Yes, proceed!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          updateStatus(id, status);
+        }
+      });
+    } else {
+      if (confirm(confirmText)) {
+        updateStatus(id, status);
+      }
+    }
+  });
+
+  // Handle delete with SweetAlert2 confirmation
+  $(document).on('click', '.delete-subscription', function(e) {
+    e.preventDefault();
+    
+    const id = $(this).data('id');
+    
+    // Use SweetAlert2 if available
+    if (typeof Swal !== 'undefined') {
+      Swal.fire({
+        title: 'Delete Subscription History',
+        text: 'Are you sure you want to delete this subscription history? This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          deleteSubscription(id);
+        }
+      });
+    } else {
+      if (confirm('Are you sure you want to delete this subscription history? This action cannot be undone.')) {
+        deleteSubscription(id);
+      }
+    }
+  });
+
+  // Function to update status
+  function updateStatus(id, status) {
+    $.ajax({
+      url: `${BASE_URL}ajax/subscription-histories/update-status.php`,
+      type: 'POST',
+      data: {
+        id: id,
+        status: status
+      },
+      dataType: 'json',
+      success: function(response) {
+        if (response.success) {
+          // Show success toast
+          if (typeof toastr !== 'undefined') {
+            toastr.success(response.message);
+          } else {
+            alert(response.message);
+          }
+          // Reload table
+          table.ajax.reload();
+        } else {
+          // Show error toast
+          if (typeof toastr !== 'undefined') {
+            toastr.error(response.message);
+          } else {
+            alert('Error: ' + response.message);
+          }
+        }
+      },
+      error: function(xhr, status, error) {
+        // Show error toast
+        if (typeof toastr !== 'undefined') {
+          toastr.error('An error occurred while updating status');
+        } else {
+          alert('An error occurred while updating status');
+        }
+        console.error('AJAX Error:', error);
+        console.error('Response:', xhr.responseText);
+      }
+    });
+  }
+
+  // Function to delete subscription
+  function deleteSubscription(id) {
+    $.ajax({
+      url: `${BASE_URL}ajax/subscription-histories/delete.php`,
+      type: 'POST',
+      data: {
+        id: id
+      },
+      dataType: 'json',
+      success: function(response) {
+        if (response.success) {
+          // Show success toast
+          if (typeof toastr !== 'undefined') {
+            toastr.success(response.message);
+            
+            // Optional: Show success with SweetAlert2 as well
+            if (typeof Swal !== 'undefined') {
+              Swal.fire({
+                title: 'Deleted!',
+                text: response.message,
+                icon: 'success',
+                timer: 2000,
+                showConfirmButton: false
+              });
+            }
+          } else {
+            alert(response.message);
+          }
+          // Reload table
+          table.ajax.reload();
+        } else {
+          // Show error toast
+          if (typeof toastr !== 'undefined') {
+            toastr.error(response.message);
+          } else {
+            alert('Error: ' + response.message);
+          }
+        }
+      },
+      error: function(xhr, status, error) {
+        // Show error toast
+        if (typeof toastr !== 'undefined') {
+          toastr.error('An error occurred while deleting');
+        } else {
+          alert('An error occurred while deleting');
+        }
+        console.error('AJAX Error:', error);
+        console.error('Response:', xhr.responseText);
+      }
+    });
+  }
+
   // Function to reset all filters
   function resetAllFilters() {
-    $("#planFilter, #gstFilter, #paymentMethodFilter").val("");
+    $("#planFilter, #gstFilter, #paymentMethodFilter, #statusFilter").val("");
     $("#startDateFilter, #endDateFilter").val("");
     $("#searchFilter").val("");
   }
@@ -67,6 +237,7 @@ $(document).ready(function () {
     const planFilter = $("#planFilter").val();
     const gstFilter = $("#gstFilter").val();
     const paymentMethodFilter = $("#paymentMethodFilter").val();
+    const statusFilter = $("#statusFilter").val();
     const startDate = $("#startDateFilter").val();
     const endDate = $("#endDateFilter").val();
     const searchTerm = $("#searchFilter").val();
@@ -127,6 +298,34 @@ $(document).ready(function () {
         value: paymentMethodFilter,
         label: paymentLabel,
         icon: paymentIcon
+      });
+    }
+    
+    // Status filter
+    if (statusFilter) {
+      let statusLabel = '';
+      let statusIcon = 'ki-outline ki-status';
+      
+      switch(statusFilter) {
+        case 'active':
+          statusLabel = 'Status: Active';
+          statusIcon = 'ki-outline ki-check-circle';
+          break;
+        case 'refunded':
+          statusLabel = 'Status: Refunded';
+          statusIcon = 'ki-outline ki-reload';
+          break;
+        case 'cancelled':
+          statusLabel = 'Status: Cancelled';
+          statusIcon = 'ki-outline ki-cross-circle';
+          break;
+      }
+      
+      filters.push({
+        type: 'status',
+        value: statusFilter,
+        label: statusLabel,
+        icon: statusIcon
       });
     }
     
@@ -192,6 +391,9 @@ $(document).ready(function () {
       case 'paymentMethod':
         $("#paymentMethodFilter").val("");
         break;
+      case 'status':
+        $("#statusFilter").val("");
+        break;
       case 'dateRange':
         $("#startDateFilter").val("");
         $("#endDateFilter").val("");
@@ -208,6 +410,9 @@ $(document).ready(function () {
   // Initialize tooltips on table redraw
   table.on('draw', function () {
     $('[data-bs-toggle="tooltip"]').tooltip();
+    
+    // Reinitialize dropdowns
+    $('.dropdown-toggle').dropdown();
   });
   
   // Update applied filters on page load

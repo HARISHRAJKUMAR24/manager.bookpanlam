@@ -382,6 +382,12 @@ function fetchSubscriptionHistories($limit, $offset, $searchValue = '', $conditi
         }
     }
 
+    // ADD THIS - Status filter
+    if (!empty($conditions['status'])) {
+        $sql .= " AND sh.status = :status";
+        $params[':status'] = $conditions['status'];
+    }
+
     if (!empty($conditions['start_date'])) {
         $sql .= " AND DATE(sh.created_at) >= :start_date";
         $params[':start_date'] = $conditions['start_date'];
@@ -464,6 +470,12 @@ function getFilteredSubscriptionHistoryRecords($searchValue = '', $conditions = 
         }
     }
 
+    // Status filter - already present in your code
+    if (!empty($conditions['status'])) {
+        $sql .= " AND sh.status = :status";
+        $params[':status'] = $conditions['status'];
+    }
+
     if (!empty($conditions['start_date'])) {
         $sql .= " AND DATE(sh.created_at) >= :start_date";
         $params[':start_date'] = $conditions['start_date'];
@@ -496,7 +508,6 @@ function getFilteredSubscriptionHistoryRecords($searchValue = '', $conditions = 
     $stmt->execute();
     return $stmt->fetchColumn();
 }
-
 function fetchManagers($limit, $offset, $searchValue, $conditions = [])
 {
     $pdo = getDbConnection();

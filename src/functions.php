@@ -1790,7 +1790,7 @@ function getSuspendedSellers($pdo)
 function getTotalEarnings($pdo)
 {
     try {
-        $stmt = $pdo->query("SELECT SUM(amount) as total FROM subscription_histories");
+        $stmt = $pdo->query("SELECT SUM(amount) as total FROM subscription_histories WHERE status != 'refunded'");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (float)($result['total'] ?? 0);
     } catch (Exception $e) {
@@ -1845,7 +1845,7 @@ function getEarningsByPeriod($pdo, $period = 'this_month')
         $utcStart = convertToUTC($start, $timezone);
         $utcEnd = convertToUTC($end, $timezone);
 
-        $stmt = $pdo->prepare("SELECT SUM(amount) as total FROM subscription_histories WHERE created_at BETWEEN ? AND ?");
+        $stmt = $pdo->prepare("SELECT SUM(amount) as total FROM subscription_histories WHERE status != 'refunded' AND created_at BETWEEN ? AND ?");
         $stmt->execute([$utcStart, $utcEnd]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -1855,14 +1855,13 @@ function getEarningsByPeriod($pdo, $period = 'this_month')
         return 0;
     }
 }
-
 /**
  * Get total GST from subscription histories
  */
 function getTotalGST($pdo)
 {
     try {
-        $stmt = $pdo->query("SELECT SUM(gst_amount) as total FROM subscription_histories WHERE gst_amount IS NOT NULL");
+        $stmt = $pdo->query("SELECT SUM(gst_amount) as total FROM subscription_histories WHERE gst_amount IS NOT NULL AND status != 'refunded'");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         return (float)($result['total'] ?? 0);
     } catch (Exception $e) {
@@ -1910,7 +1909,7 @@ function getGSTByPeriod($pdo, $period = 'this_month')
         $utcStart = convertToUTC($start, $timezone);
         $utcEnd = convertToUTC($end, $timezone);
 
-        $stmt = $pdo->prepare("SELECT SUM(gst_amount) as total FROM subscription_histories WHERE created_at BETWEEN ? AND ? AND gst_amount IS NOT NULL");
+        $stmt = $pdo->prepare("SELECT SUM(gst_amount) as total FROM subscription_histories WHERE created_at BETWEEN ? AND ? AND gst_amount IS NOT NULL AND status != 'refunded'");
         $stmt->execute([$utcStart, $utcEnd]);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -1956,6 +1955,121 @@ function getDashboardStatistics($pdo)
         'gst_today' => getGSTByPeriod($pdo, 'today'),
         'gst_this_month' => getGSTByPeriod($pdo, 'this_month'),
         'gst_last_month' => getGSTByPeriod($pdo, 'last_month')
+    ];
+}
+
+
+//============================================================================//
+// ==================== SUBSCRIPTION REFUND STATISTICS ======================//
+
+/**
+ * Get total refund amount from subscription histories
+ */
+function getTotalSubscriptionRefunds($pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT SUM(amount) as total FROM subscription_histories WHERE status = 'refunded'");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (float)($result['total'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getTotalSubscriptionRefunds: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get refund count from subscription histories
+ */
+function getTotalSubscriptionRefundCount($pdo)
+{
+    try {
+        $stmt = $pdo->query("SELECT COUNT(*) as count FROM subscription_histories WHERE status = 'refunded'");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return (int)($result['count'] ?? 0);
+    } catch (Exception $e) {
+        error_log("Error in getTotalSubscriptionRefundCount: " . $e->getMessage());
+        return 0;
+    }
+}
+
+/**
+ * Get refund statistics for a specific period from subscription histories
+ * @param string $period 'today', 'this_week', 'this_month', 'last_month'
+ */
+function getSubscriptionRefundsByPeriod($pdo, $period = 'this_month')
+{
+    try {
+        $timezone = getAppTimezone();
+        $now = new DateTime('now', new DateTimeZone($timezone));
+
+        switch ($period) {
+            case 'today':
+                $start = $now->format('Y-m-d 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'this_week':
+                $monday = clone $now;
+                $monday->modify('monday this week');
+                $start = $monday->format('Y-m-d 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'this_month':
+                $start = $now->format('Y-m-01 00:00:00');
+                $end = $now->format('Y-m-d 23:59:59');
+                break;
+
+            case 'last_month':
+                $lastMonth = clone $now;
+                $lastMonth->modify('first day of last month');
+                $start = $lastMonth->format('Y-m-01 00:00:00');
+                
+                $lastMonthEnd = clone $now;
+                $lastMonthEnd->modify('last day of last month');
+                $end = $lastMonthEnd->format('Y-m-d 23:59:59');
+                break;
+
+            default:
+                return ['amount' => 0, 'count' => 0];
+        }
+
+        // Convert to UTC for database query
+        $utcStart = convertToUTC($start, $timezone);
+        $utcEnd = convertToUTC($end, $timezone);
+
+        // Get refund amount
+        $amountStmt = $pdo->prepare("SELECT COALESCE(SUM(amount), 0) as total FROM subscription_histories WHERE status = 'refunded' AND created_at BETWEEN ? AND ?");
+        $amountStmt->execute([$utcStart, $utcEnd]);
+        $amount = (float)$amountStmt->fetchColumn();
+
+        // Get refund count
+        $countStmt = $pdo->prepare("SELECT COUNT(*) as count FROM subscription_histories WHERE status = 'refunded' AND created_at BETWEEN ? AND ?");
+        $countStmt->execute([$utcStart, $utcEnd]);
+        $count = (int)$countStmt->fetchColumn();
+
+        return [
+            'amount' => $amount,
+            'count' => $count
+        ];
+    } catch (Exception $e) {
+        error_log("Error in getSubscriptionRefundsByPeriod: " . $e->getMessage());
+        return ['amount' => 0, 'count' => 0];
+    }
+}
+
+/**
+ * Get all refund statistics in one call
+ */
+function getRefundStatistics($pdo)
+{
+    return [
+        'total_refund_amount' => getTotalSubscriptionRefunds($pdo),
+        'total_refund_count' => getTotalSubscriptionRefundCount($pdo),
+        'today_refunds' => getSubscriptionRefundsByPeriod($pdo, 'today'),
+        'this_week_refunds' => getSubscriptionRefundsByPeriod($pdo, 'this_week'),
+        'this_month_refunds' => getSubscriptionRefundsByPeriod($pdo, 'this_month'),
+        'last_month_refunds' => getSubscriptionRefundsByPeriod($pdo, 'last_month')
     ];
 }
 
@@ -2162,8 +2276,8 @@ function getPaymentStatsByDateRange($pdo, $startDate = null, $endDate = null)
             $params[':end_date'] = $endDate;
         }
 
-        // Total amount (sum of amount column)
-        $totalSql = "SELECT COALESCE(SUM(amount), 0) as total FROM customer_payment WHERE 1=1 $dateCondition";
+        // Total amount (sum of amount column) - EXCLUDING REFUNDS
+        $totalSql = "SELECT COALESCE(SUM(amount), 0) as total FROM customer_payment WHERE status != 'refund' AND 1=1 $dateCondition";
         $totalStmt = $pdo->prepare($totalSql);
         foreach ($params as $key => $value) {
             $totalStmt->bindValue($key, $value);
@@ -2189,11 +2303,21 @@ function getPaymentStatsByDateRange($pdo, $startDate = null, $endDate = null)
         $unpaidStmt->execute();
         $unpaid = (float)$unpaidStmt->fetchColumn();
 
+        // Refund amount (status = 'refund')
+        $refundSql = "SELECT COALESCE(SUM(amount), 0) as total FROM customer_payment WHERE status = 'refund' $dateCondition";
+        $refundStmt = $pdo->prepare($refundSql);
+        foreach ($params as $key => $value) {
+            $refundStmt->bindValue($key, $value);
+        }
+        $refundStmt->execute();
+        $refund = (float)$refundStmt->fetchColumn();
+
         // Count transactions
         $countSql = "SELECT 
                         COUNT(*) as total_count,
                         SUM(CASE WHEN status = 'paid' THEN 1 ELSE 0 END) as paid_count,
-                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count
+                        SUM(CASE WHEN status = 'pending' THEN 1 ELSE 0 END) as pending_count,
+                        SUM(CASE WHEN status = 'refund' THEN 1 ELSE 0 END) as refund_count
                     FROM customer_payment WHERE 1=1 $dateCondition";
         $countStmt = $pdo->prepare($countSql);
         foreach ($params as $key => $value) {
@@ -2205,8 +2329,10 @@ function getPaymentStatsByDateRange($pdo, $startDate = null, $endDate = null)
         // Payment method breakdown
         $methodSql = "SELECT 
                         payment_method,
-                        COALESCE(SUM(amount), 0) as total,
-                        COUNT(*) as count
+                        COALESCE(SUM(CASE WHEN status != 'refund' THEN amount ELSE 0 END), 0) as total,
+                        COUNT(*) as count,
+                        COALESCE(SUM(CASE WHEN status = 'refund' THEN amount ELSE 0 END), 0) as refund_total,
+                        SUM(CASE WHEN status = 'refund' THEN 1 ELSE 0 END) as refund_count
                     FROM customer_payment 
                     WHERE 1=1 $dateCondition
                     GROUP BY payment_method";
@@ -2217,15 +2343,22 @@ function getPaymentStatsByDateRange($pdo, $startDate = null, $endDate = null)
         $methodStmt->execute();
         $methodBreakdown = $methodStmt->fetchAll(PDO::FETCH_ASSOC);
 
+        // Net revenue (total - refunds)
+        $netRevenue = $total - $refund;
+
         return [
             'total' => $total,
             'paid' => $paid,
             'unpaid' => $unpaid,
+            'refund' => $refund,
+            'net_revenue' => $netRevenue,
             'total_count' => (int)($counts['total_count'] ?? 0),
             'paid_count' => (int)($counts['paid_count'] ?? 0),
             'pending_count' => (int)($counts['pending_count'] ?? 0),
+            'refund_count' => (int)($counts['refund_count'] ?? 0),
             'method_breakdown' => $methodBreakdown,
-            'collection_rate' => $total > 0 ? round(($paid / $total) * 100, 1) : 0
+            'collection_rate' => $total > 0 ? round(($paid / $total) * 100, 1) : 0,
+            'refund_rate' => $total > 0 ? round(($refund / $total) * 100, 1) : 0
         ];
     } catch (Exception $e) {
         error_log("Error in getPaymentStatsByDateRange: " . $e->getMessage());
@@ -2242,11 +2375,15 @@ function getEmptyPaymentStats()
         'total' => 0,
         'paid' => 0,
         'unpaid' => 0,
+        'refund' => 0,
+        'net_revenue' => 0,
         'total_count' => 0,
         'paid_count' => 0,
         'pending_count' => 0,
+        'refund_count' => 0,
         'method_breakdown' => [],
-        'collection_rate' => 0
+        'collection_rate' => 0,
+        'refund_rate' => 0
     ];
 }
 

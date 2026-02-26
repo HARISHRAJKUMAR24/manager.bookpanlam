@@ -15,6 +15,7 @@ try {
     $paymentMethod = isset($_POST['paymentMethodFilter']) ? $_POST['paymentMethodFilter'] : '';
     $startDate = isset($_POST['startDateFilter']) ? $_POST['startDateFilter'] : '';
     $endDate = isset($_POST['endDateFilter']) ? $_POST['endDateFilter'] : '';
+    $statusFilter = isset($_POST['statusFilter']) ? $_POST['statusFilter'] : '';
     
     // Prepare conditions
     $conditions = [];
@@ -23,6 +24,7 @@ try {
     if (!empty($paymentMethod)) $conditions['payment_method'] = $paymentMethod;
     if (!empty($startDate)) $conditions['start_date'] = $startDate;
     if (!empty($endDate)) $conditions['end_date'] = $endDate;
+    if (!empty($statusFilter)) $conditions['status'] = $statusFilter;
     
     // Fetch data
     $histories = fetchSubscriptionHistories($limit, $offset, $searchValue, $conditions);
@@ -77,7 +79,11 @@ try {
                 $paymentMethodBadge = '<span class="badge badge-light-success fw-bold">PayU</span>';
                 break;
             default:
-                $paymentMethodBadge = '<span class="badge badge-light-dark fw-bold">' . ucfirst($paymentMethodText) . '</span>';
+                if (strpos($paymentMethodText, 'MP_') === 0) {
+                    $paymentMethodBadge = '<span class="badge badge-light-warning fw-bold">Manual Payment</span>';
+                } else {
+                    $paymentMethodBadge = '<span class="badge badge-light-dark fw-bold">' . ucfirst($paymentMethodText) . '</span>';
+                }
                 break;
         }
         
@@ -95,6 +101,50 @@ try {
             $paymentIdHtml = '<span class="text-muted">N/A</span>';
         }
         
+        // Status badge with dropdown actions
+        $status = $row['status'] ?? 'active';
+        $statusBadge = '';
+        $statusClass = '';
+        
+        switch($status) {
+            case 'active':
+                $statusClass = 'badge-light-success';
+                break;
+            case 'refunded':
+                $statusClass = 'badge-light-warning';
+                break;
+            case 'cancelled':
+                $statusClass = 'badge-light-danger';
+                break;
+            default:
+                $statusClass = 'badge-light-secondary';
+        }
+        
+        // Create status dropdown
+        $statusHtml = '<div class="dropdown">';
+        $statusHtml .= '<button class="btn btn-sm ' . $statusClass . ' dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">';
+        $statusHtml .= ucfirst($status);
+        $statusHtml .= '</button>';
+        $statusHtml .= '<ul class="dropdown-menu">';
+        
+        // Only show active option if current status is not active
+        if ($status !== 'active') {
+            $statusHtml .= '<li><a class="dropdown-item status-change" href="#" data-id="' . $row['id'] . '" data-status="active">Active</a></li>';
+        }
+        
+        // Show refund option if status is not refunded
+        if ($status !== 'refunded') {
+            $statusHtml .= '<li><a class="dropdown-item status-change" href="#" data-id="' . $row['id'] . '" data-status="refunded">Refunded</a></li>';
+        }
+        
+        // Show cancelled option if status is not cancelled
+        if ($status !== 'cancelled') {
+            $statusHtml .= '<li><a class="dropdown-item status-change" href="#" data-id="' . $row['id'] . '" data-status="cancelled">Cancelled</a></li>';
+        }
+        
+        $statusHtml .= '</ul>';
+        $statusHtml .= '</div>';
+        
         $data[] = [
             "checkbox" => '<div class="form-check form-check-sm form-check-custom form-check-solid"><input class="form-check-input" type="checkbox" value="' . $row['id'] . '" /></div>',
             "invoice_number" => '<span class="text-dark fw-bold">#' . $row['invoice_number'] . '</span>',
@@ -102,7 +152,9 @@ try {
             "plan_name" => $row['plan_name'] ?? 'N/A',
             "amount" => '<span class="text-dark fw-bold">' . $amountFormatted . '</span>',
             "payment_method" => $paymentMethodBadge,
-            "payment_id" => $paymentIdHtml
+            "payment_id" => $paymentIdHtml,
+            "status" => $statusHtml,
+            "id" => $row['id'] // Add ID for actions
         ];
     }
     
@@ -122,7 +174,7 @@ try {
         "recordsTotal" => 0,
         "recordsFiltered" => 0,
         "data" => [],
-        "error" => "Database error occurred"
+        "error" => "Database error occurred: " . $e->getMessage()
     ]);
 }
 exit();

@@ -14,6 +14,9 @@ $earningsStats = getPlatformEarningsStats($pdo);
 $planStats = getDetailedPlanStats($pdo);
 $plans = $planStats['plans'];
 $totalUsers = $planStats['total_users'];
+
+// Get refund statistics
+$refundStats = getRefundStatistics($pdo);
 ?>
 <!--end:Header-->
 
@@ -358,7 +361,7 @@ $totalUsers = $planStats['total_users'];
                           <span class="fs-4 fw-semibold text-gray-400 me-1">₹</span>
                           <span class="fs-2hx fw-bold text-dark"><?= number_format($stats['total_earnings']) ?></span>
                         </div>
-                       
+
                       </div>
                     </div>
                   </div>
@@ -374,7 +377,7 @@ $totalUsers = $planStats['total_users'];
                           <span class="fs-4 fw-semibold text-gray-400 me-1">₹</span>
                           <span class="fs-2hx fw-bold text-dark"><?= number_format($stats['total_earnings'] - $stats['total_gst']) ?></span>
                         </div>
-                        
+
                       </div>
 
                     </div>
@@ -391,7 +394,7 @@ $totalUsers = $planStats['total_users'];
                           <span class="fs-4 fw-semibold text-gray-400 me-1">₹</span>
                           <span class="fs-2hx fw-bold text-dark"><?= number_format($stats['total_gst']) ?></span>
                         </div>
-                        
+
                       </div>
 
                     </div>
@@ -410,6 +413,75 @@ $totalUsers = $planStats['total_users'];
   </div>
   <!--end::Content-->
 
+<!--begin::Content-->
+<div id="kt_app_content" class="app-content flex-column-fluid">
+    <div id="kt_app_content_container" class="app-container container-fluid">
+        <!-- Refund Statistics Container -->
+        <div class="row g-5 g-xl-8 mb-5 mt-5">
+            <div class="col-12">
+                <!--begin::Card-->
+                <div class="card card-flush">
+                    <!--begin::Card header-->
+                    <div class="card-header pt-7">
+                        <div class="card-title">
+                            <h2 class="fw-bold">Subscription Refund Statistics</h2>
+                        </div>
+                    </div>
+                    <!--end::Card header-->
+
+                    <!--begin::Card body-->
+                    <div class="card-body pt-5">
+                        <!-- Simple 2 Cards - Refund Count & Amount -->
+                        <div class="row g-5 g-xl-8">
+                            <!-- Total Refund Count -->
+                            <div class="col-md-6">
+                                <div class="card card-dashed bg-light-warning">
+                                    <div class="card-body d-flex flex-column justify-content-between p-8">
+                                        <div class="d-flex align-items-center">
+                                            <div class="symbol symbol-60px symbol-circle bg-warning me-4">
+                                                <i class="ki-duotone ki-arrow-rotate-left fs-2x text-white"></i>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-600 fw-semibold fs-6 d-block mb-1">Total Refund Count</span>
+                                                <span class="fs-2x fw-bold text-dark"><?= $refundStats['total_refund_count'] ?></span>
+                                                
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Refund Amount -->
+                            <div class="col-md-6">
+                                <div class="card card-dashed bg-light-danger">
+                                    <div class="card-body d-flex flex-column justify-content-between p-8">
+                                        <div class="d-flex align-items-center">
+                                            <div class="symbol symbol-60px symbol-circle bg-danger me-4">
+                                                <i class="ki-duotone ki-money fs-2x text-white"></i>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-600 fw-semibold fs-6 d-block mb-1">Total Refund Amount</span>
+                                                <div class="d-flex align-items-center">
+                                                    <span class="fs-4 fw-semibold text-gray-400 me-1">₹</span>
+                                                    <span class="fs-2x fw-bold text-dark"><?= number_format($refundStats['total_refund_amount']) ?></span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <!--end::Card body-->
+                </div>
+                <!--end::Card-->
+            </div>
+        </div>
+    </div>
+</div>
+<!--end::Content-->
+  
   <!--begin::Content-->
   <div id="kt_app_content" class="app-content flex-column-fluid">
     <div id="kt_app_content_container" class="app-container container-fluid">
@@ -467,173 +539,200 @@ $totalUsers = $planStats['total_users'];
   </div>
   <!--end::Content-->
 
-  <!--begin::Content-->
-  <div id="kt_app_content" class="app-content flex-column-fluid">
+<!--begin::Content-->
+<div id="kt_app_content" class="app-content flex-column-fluid">
     <div id="kt_app_content_container" class="app-container container-fluid">
 
-      <div class="row g-5 g-xl-8 mb-5 mt-5">
-        <div class="col-12">
-          <!--begin::Card-->
-          <div class="card card-flush">
-            <!--begin::Card header-->
-            <div class="card-header pt-7">
-              <div class="card-title">
-                <h2 class="fw-bold">Platform Earnings</h2>
-              </div>
-
-            </div>
-            <!--end::Card header-->
-
-            <!--begin::Card body-->
-            <div class="card-body pt-5">
-
-              <!-- Total Platform Earnings Card -->
-              <div class="row g-5 g-xl-8 mb-8">
-                <div class="col-12">
-                  <div class="card card-dashed bg-light-primary">
-                    <div class="card-body p-8">
-                      <div class="d-flex align-items-center mb-5">
-                        <div class="symbol symbol-60px symbol-circle bg-primary me-4">
-                          <i class="ki-duotone ki-wallet fs-2x text-white"></i>
+        <div class="row g-5 g-xl-8 mb-5 mt-5">
+            <div class="col-12">
+                <!--begin::Card-->
+                <div class="card card-flush">
+                    <!--begin::Card header-->
+                    <div class="card-header pt-7">
+                        <div class="card-title">
+                            <h2 class="fw-bold">Platform Earnings</h2>
                         </div>
-                        <div>
-                          <span class="text-gray-600 fw-semibold fs-6 d-block mb-1">Total Platform Earnings</span>
-                          <span class="fs-2x fw-bold text-dark">₹ <?= number_format($earningsStats['total']['total'] ?? 0) ?></span>
-                        </div>
-                      </div>
+                    </div>
+                    <!--end::Card header-->
 
-                      <div class="row g-5">
-                        <!-- Paid -->
-                        <div class="col-md-6">
-                          <div class="d-flex align-items-center bg-light-success rounded p-5">
-                            <i class="ki-duotone ki-check-circle fs-2x text-success me-3"></i>
-                            <div>
-                              <span class="text-gray-600 fs-7 d-block">Paid</span>
-                              <span class="fw-bold text-success fs-1">₹ <?= number_format($earningsStats['total']['paid'] ?? 0) ?></span>
+                    <!--begin::Card body-->
+                    <div class="card-body pt-5">
 
+                        <!-- Total Platform Earnings Card -->
+                        <div class="row g-5 g-xl-8 mb-8">
+                            <div class="col-12">
+                                <div class="card card-dashed bg-light-primary">
+                                    <div class="card-body p-8">
+                                        <div class="d-flex align-items-center mb-5">
+                                            <div class="symbol symbol-60px symbol-circle bg-primary me-4">
+                                                <i class="ki-duotone ki-wallet fs-2x text-white"></i>
+                                            </div>
+                                            <div>
+                                                <span class="text-gray-600 fw-semibold fs-6 d-block mb-1">Total Platform Earnings</span>
+                                                <span class="fs-2x fw-bold text-dark">₹ <?= number_format($earningsStats['total']['total'] ?? 0) ?></span>
+                                                <span class="text-muted fs-7 ms-3">(Excluding Refunds)</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="row g-5">
+                                            <!-- Paid -->
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center bg-light-success rounded p-5">
+                                                    <i class="ki-duotone ki-check-circle fs-2x text-success me-3"></i>
+                                                    <div>
+                                                        <span class="text-gray-600 fs-7 d-block">Paid</span>
+                                                        <span class="fw-bold text-success fs-1">₹ <?= number_format($earningsStats['total']['paid'] ?? 0) ?></span>
+                                                        <span class="text-muted fs-7 d-block"><?= ($earningsStats['total']['paid_count'] ?? 0) ?> transactions</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Unpaid -->
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center bg-light-danger rounded p-5">
+                                                    <i class="ki-duotone ki-cross-circle fs-2x text-danger me-3"></i>
+                                                    <div>
+                                                        <span class="text-gray-600 fs-7 d-block">Unpaid / Pending</span>
+                                                        <span class="fw-bold text-danger fs-1">₹ <?= number_format($earningsStats['total']['unpaid'] ?? 0) ?></span>
+                                                        <span class="text-muted fs-7 d-block"><?= ($earningsStats['total']['pending_count'] ?? 0) ?> transactions</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Refund -->
+                                            <div class="col-md-4">
+                                                <div class="d-flex align-items-center bg-light-warning rounded p-5">
+                                                    <i class="ki-duotone ki-arrow-rotate-left fs-2x text-warning me-3"></i>
+                                                    <div>
+                                                        <span class="text-gray-600 fs-7 d-block">Refunded</span>
+                                                        <span class="fw-bold text-warning fs-1">₹ <?= number_format($earningsStats['total']['refund'] ?? 0) ?></span>
+                                                        <span class="text-muted fs-7 d-block"><?= ($earningsStats['total']['refund_count'] ?? 0) ?> refunds</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
                             </div>
-                          </div>
                         </div>
 
-                        <!-- Unpaid -->
-                        <div class="col-md-6">
-                          <div class="d-flex align-items-center bg-light-danger rounded p-5">
-                            <i class="ki-duotone ki-cross-circle fs-2x text-danger me-3"></i>
-                            <div>
-                              <span class="text-gray-600 fs-7 d-block">Unpaid / Pending</span>
-                              <span class="fw-bold text-danger fs-1">₹ <?= number_format($earningsStats['total']['unpaid'] ?? 0) ?></span>
-
+                        <!-- Period-wise Cards with Refund Info -->
+                        <div class="row g-5 g-xl-8">
+                            <!-- Today -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card card-flush">
+                                    <div class="card-body p-6">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <i class="ki-duotone ki-calendar fs-2 text-info me-2"></i>
+                                            <span class="text-gray-500 fw-semibold">Today</span>
+                                        </div>
+                                        <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['today']['total'] ?? 0) ?></span>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Paid:</span>
+                                            <span class="fw-bold text-success">₹ <?= number_format($earningsStats['today']['paid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Unpaid:</span>
+                                            <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['today']['unpaid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Refund:</span>
+                                            <span class="fw-bold text-warning">₹ <?= number_format($earningsStats['today']['refund'] ?? 0) ?></span>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
                             </div>
-                          </div>
+
+                            <!-- This Week -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card card-flush">
+                                    <div class="card-body p-6">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <i class="ki-duotone ki-chart-line-up fs-2 text-primary me-2"></i>
+                                            <span class="text-gray-500 fw-semibold">This Week</span>
+                                        </div>
+                                        <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['this_week']['total'] ?? 0) ?></span>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Paid:</span>
+                                            <span class="fw-bold text-success">₹ <?= number_format($earningsStats['this_week']['paid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Unpaid:</span>
+                                            <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['this_week']['unpaid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Refund:</span>
+                                            <span class="fw-bold text-warning">₹ <?= number_format($earningsStats['this_week']['refund'] ?? 0) ?></span>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- This Month -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card card-flush">
+                                    <div class="card-body p-6">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <i class="ki-duotone ki-chart-simple fs-2 text-success me-2"></i>
+                                            <span class="text-gray-500 fw-semibold">This Month</span>
+                                        </div>
+                                        <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['this_month']['total'] ?? 0) ?></span>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Paid:</span>
+                                            <span class="fw-bold text-success">₹ <?= number_format($earningsStats['this_month']['paid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Unpaid:</span>
+                                            <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['this_month']['unpaid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Refund:</span>
+                                            <span class="fw-bold text-warning">₹ <?= number_format($earningsStats['this_month']['refund'] ?? 0) ?></span>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Last Month -->
+                            <div class="col-md-6 col-xl-3">
+                                <div class="card card-flush">
+                                    <div class="card-body p-6">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <i class="ki-duotone ki-chart-line-down fs-2 text-warning me-2"></i>
+                                            <span class="text-gray-500 fw-semibold">Last Month</span>
+                                        </div>
+                                        <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['last_month']['total'] ?? 0) ?></span>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Paid:</span>
+                                            <span class="fw-bold text-success">₹ <?= number_format($earningsStats['last_month']['paid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Unpaid:</span>
+                                            <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['last_month']['unpaid'] ?? 0) ?></span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-gray-500 fs-7">Refund:</span>
+                                            <span class="fw-bold text-warning">₹ <?= number_format($earningsStats['last_month']['refund'] ?? 0) ?></span>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                      </div>
 
                     </div>
-                  </div>
+                    <!--end::Card body-->
                 </div>
-              </div>
-
-              <!-- Period-wise Simple Cards -->
-              <div class="row g-5 g-xl-8">
-                <!-- Today -->
-                <div class="col-md-6 col-xl-3">
-                  <div class="card card-flush">
-                    <div class="card-body p-6">
-                      <div class="d-flex align-items-center mb-3">
-                        <i class="ki-duotone ki-calendar fs-2 text-info me-2"></i>
-                        <span class="text-gray-500 fw-semibold">Today</span>
-                      </div>
-                      <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['today']['total'] ?? 0) ?></span>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Paid:</span>
-                        <span class="fw-bold text-success">₹ <?= number_format($earningsStats['today']['paid'] ?? 0) ?></span>
-                      </div>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Unpaid:</span>
-                        <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['today']['unpaid'] ?? 0) ?></span>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <!-- This Week -->
-                <div class="col-md-6 col-xl-3">
-                  <div class="card card-flush">
-                    <div class="card-body p-6">
-                      <div class="d-flex align-items-center mb-3">
-                        <i class="ki-duotone ki-chart-line-up fs-2 text-primary me-2"></i>
-                        <span class="text-gray-500 fw-semibold">This Week</span>
-                      </div>
-                      <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['this_week']['total'] ?? 0) ?></span>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Paid:</span>
-                        <span class="fw-bold text-success">₹ <?= number_format($earningsStats['this_week']['paid'] ?? 0) ?></span>
-                      </div>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Unpaid:</span>
-                        <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['this_week']['unpaid'] ?? 0) ?></span>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <!-- This Month -->
-                <div class="col-md-6 col-xl-3">
-                  <div class="card card-flush">
-                    <div class="card-body p-6">
-                      <div class="d-flex align-items-center mb-3">
-                        <i class="ki-duotone ki-chart-simple fs-2 text-success me-2"></i>
-                        <span class="text-gray-500 fw-semibold">This Month</span>
-                      </div>
-                      <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['this_month']['total'] ?? 0) ?></span>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Paid:</span>
-                        <span class="fw-bold text-success">₹ <?= number_format($earningsStats['this_month']['paid'] ?? 0) ?></span>
-                      </div>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Unpaid:</span>
-                        <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['this_month']['unpaid'] ?? 0) ?></span>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Last Month -->
-                <div class="col-md-6 col-xl-3">
-                  <div class="card card-flush">
-                    <div class="card-body p-6">
-                      <div class="d-flex align-items-center mb-3">
-                        <i class="ki-duotone ki-chart-line-down fs-2 text-warning me-2"></i>
-                        <span class="text-gray-500 fw-semibold">Last Month</span>
-                      </div>
-                      <span class="fs-2x fw-bold text-dark d-block mb-3">₹ <?= number_format($earningsStats['last_month']['total'] ?? 0) ?></span>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Paid:</span>
-                        <span class="fw-bold text-success">₹ <?= number_format($earningsStats['last_month']['paid'] ?? 0) ?></span>
-                      </div>
-                      <div class="d-flex justify-content-between">
-                        <span class="text-gray-500 fs-7">Unpaid:</span>
-                        <span class="fw-bold text-danger">₹ <?= number_format($earningsStats['last_month']['unpaid'] ?? 0) ?></span>
-                      </div>
-
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
+                <!--end::Card-->
             </div>
-            <!--end::Card body-->
-          </div>
-          <!--end::Card-->
         </div>
-      </div>
     </div>
-  </div>
-  <!--end::Content-->
+</div>
+<!--end::Content-->
 </div>
 <!--end::Content wrapper-->
 

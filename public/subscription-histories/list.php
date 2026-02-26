@@ -75,7 +75,7 @@ renderTemplate('header');
                                 <!-- Applied filters will appear here -->
                             </div>
                             <!--end::Applied Filters-->
-                            
+
                             <!--begin::Filter Dropdown Button-->
                             <button type="button" class="btn btn-light btn-active-light-primary" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end">
                                 <i class="ki-duotone ki-filter fs-2 me-1">
@@ -85,7 +85,7 @@ renderTemplate('header');
                                 <span class="d-none d-md-inline">More Filters</span>
                             </button>
                             <!--end::Filter Dropdown Button-->
-                            
+
                             <!--begin::Filter Menu-->
                             <div class="menu menu-sub menu-sub-dropdown w-350px w-md-400px" data-kt-menu="true">
                                 <!--begin::Header-->
@@ -113,7 +113,7 @@ renderTemplate('header');
                                                 <?php endforeach; ?>
                                             </select>
                                         </div>
-                                        
+
                                         <!--GST Filter-->
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fs-6 fw-semibold">GST Status</label>
@@ -123,7 +123,7 @@ renderTemplate('header');
                                                 <option value="no">No (No GST)</option>
                                             </select>
                                         </div>
-                                        
+
                                         <!--Payment Method Filter-->
                                         <div class="col-12 col-md-6">
                                             <label class="form-label fs-6 fw-semibold">Payment Method</label>
@@ -132,10 +132,21 @@ renderTemplate('header');
                                                 <option value="razorpay">Razorpay</option>
                                                 <option value="phone pay">Phone Pay</option>
                                                 <option value="payu">PayU</option>
-                                                 <option value="manual">Manual Payment</option>
+                                                <option value="manual">Manual Payment</option>
                                             </select>
                                         </div>
-                                        
+
+                                        <!--Status Filter - NEW -->
+                                        <div class="col-12 col-md-6">
+                                            <label class="form-label fs-6 fw-semibold">Status</label>
+                                            <select class="form-select form-select-solid fw-bold" id="statusFilter">
+                                                <option value="">All</option>
+                                                <option value="active">Active</option>
+                                                <option value="refunded">Refunded</option>
+                                                <option value="cancelled">Cancelled</option>
+                                            </select>
+                                        </div>
+
                                         <!--Date Range Filter - Full Width-->
                                         <div class="col-12">
                                             <label class="form-label fs-6 fw-semibold">Date Range</label>
@@ -152,7 +163,7 @@ renderTemplate('header');
                                         </div>
                                     </div>
                                     <!--end::Grid Container-->
-                                    
+
                                     <!--begin::Actions-->
                                     <div class="d-flex justify-content-between align-items-center mt-8 pt-5 border-top">
                                         <button type="reset" class="btn btn-light btn-active-light-primary fw-semibold" id="resetAllFiltersBtn">
@@ -195,6 +206,8 @@ renderTemplate('header');
                                 <th class="min-w-125px">Amount</th>
                                 <th class="min-w-125px">Payment Method</th>
                                 <th class="min-w-150px">Payment ID</th>
+                                <th class="min-w-100px">Status</th>
+                                <th class="min-w-100px">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="text-gray-600 fw-semibold">
@@ -213,37 +226,39 @@ renderTemplate('header');
 <!--end::Content wrapper-->
 
 <style>
-.applied-filter-badge {
-    padding: 5px 12px;
-    border-radius: 6px;
-    background-color: var(--bs-light);
-    border: 1px solid var(--bs-gray-300);
-    font-size: 0.875rem;
-    font-weight: 500;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
+    .applied-filter-badge {
+        padding: 5px 12px;
+        border-radius: 6px;
+        background-color: var(--bs-light);
+        border: 1px solid var(--bs-gray-300);
+        font-size: 0.875rem;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
 
-.applied-filter-badge .remove-filter {
-    cursor: pointer;
-    color: var(--bs-danger);
-    font-size: 1rem;
-    line-height: 1;
-    padding: 0 2px;
-    border-radius: 3px;
-}
+    .applied-filter-badge .remove-filter {
+        cursor: pointer;
+        color: var(--bs-danger);
+        font-size: 1rem;
+        line-height: 1;
+        padding: 0 2px;
+        border-radius: 3px;
+    }
 
-.applied-filter-badge .remove-filter:hover {
-    background-color: var(--bs-danger);
-    color: white;
-}
+    .applied-filter-badge .remove-filter:hover {
+        background-color: var(--bs-danger);
+        color: white;
+    }
 </style>
 
 <!--include:Footer-->
 <?php renderTemplate('footer'); ?>
 <!--end:Footer-->
-
+<!-- Toastr -->
+<link href="assets/plugins/custom/toastr/toastr.min.css" rel="stylesheet" type="text/css" />
+<script src="assets/plugins/custom/toastr/toastr.min.js"></script>
 <!--begin::Vendors Javascript(used for this page only)-->
 <script src="assets/plugins/custom/jquery/jquery-3.7.1.min.js"></script>
 <script src="assets/plugins/custom/datatables/datatables.bundle.js"></script>
