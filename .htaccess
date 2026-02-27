@@ -35,6 +35,10 @@ RewriteRule ^discounts$ public/discounts/list.php [L]
 # Redirect /discounts/add to public/discounts/add.php
 RewriteRule ^discounts/add$ public/discounts/add.php [L]
 
+
+# Redirect /custom-domain to public/custom-domain/list.php
+RewriteRule ^custom-domain$ public/custom-domain/list.php [L]
+
 # Redirect /subscription-histories to public/subscription-histories/list.php
 RewriteRule ^subscription-histories$ public/subscription-histories/list.php [L]
 

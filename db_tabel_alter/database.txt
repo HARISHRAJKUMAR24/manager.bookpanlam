@@ -633,3 +633,21 @@ AFTER `manual_payment_methods_limit`;
 UPDATE `subscription_plans` 
 SET `upi_payment_methods_limit` = 'unlimited' 
 WHERE `upi_payment_methods_limit` IS NULL OR `upi_payment_methods_limit` = '';
+
+
+
+
+
+--------------------------------------------
+Staging drama 
+
+
+ALTER TABLE `subscription_plans` 
+ADD COLUMN `custom_domain` tinyint(1) NOT NULL DEFAULT 0 COMMENT '0=disabled, 1=enabled' AFTER `gst_type`;
+
+
+
+-- Add custom domain and domain request columns
+ALTER TABLE `website_settings`
+ADD COLUMN `custom_domain` varchar(255) DEFAULT NULL AFTER `nav_links`,
+ADD COLUMN `domain_request` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`domain_request`));

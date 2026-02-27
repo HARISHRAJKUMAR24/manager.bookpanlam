@@ -33,16 +33,37 @@ try {
 
     $data = array();
 
+    // Get current date for expiry check
+    $currentDate = date('Y-m-d');
+    $currentDateTime = date('Y-m-d H:i:s');
+
     foreach ($users as $row) {
         // Format plan name with appropriate badge color
         $planName = $row['plan_name'] ?? 'No Plan';
         $badgeClass = $planName === 'No Plan' ? 'badge-light-warning' : 'badge-light-primary';
         $planBadge = '<span class="badge ' . $badgeClass . ' fw-bold px-3 py-2">' . htmlspecialchars($planName) . '</span>';
         
-        // Format expires_on date
-        $expiresOn = !empty($row['expires_on']) && $row['expires_on'] != '0000-00-00 00:00:00' 
-            ? date('d M Y', strtotime($row['expires_on'])) 
-            : '<span class="badge badge-light-secondary">Never</span>';
+        // Format expires_on date and check if expired
+        $expiresOn = '';
+        $expiryStatus = '';
+        
+        if (!empty($row['expires_on']) && $row['expires_on'] != '0000-00-00 00:00:00') {
+            $expiryDate = date('Y-m-d', strtotime($row['expires_on']));
+            $formattedDate = date('d M Y', strtotime($row['expires_on']));
+            
+            // Check if expired (compare with current date)
+            if ($expiryDate < $currentDate) {
+                $expiresOn = '<span class="badge badge-light-danger fw-bold px-3 py-2" data-bs-toggle="tooltip" title="Expired on ' . $formattedDate . '">Expired</span>';
+            } else {
+                // Calculate days remaining
+                $daysRemaining = floor((strtotime($expiryDate) - strtotime($currentDate)) / (60 * 60 * 24));
+                $expiresOn = '<div class="d-flex flex-column">' .
+                             '<span class="fw-bold text-dark">' . $formattedDate . '</span>' .
+                             '</div>';
+            }
+        } else {
+            $expiresOn = '<span class="badge badge-light-secondary">Never</span>';
+        }
         
         // Handle image paths
         $userImage = !empty($row['image']) ? UPLOADS_URL . $row['image'] : 'assets/media/avatars/blank.png';
@@ -61,7 +82,7 @@ try {
                 </a>
             </div>
             <div class="d-flex flex-column">
-                <a href="#" class="text-gray-800 text-hover-primary mb-1">' . htmlspecialchars($row['name'] ?? 'N/A') . '</a>
+                <a href="users/' . ($row['user_id'] ?? '') . '" class="text-gray-800 text-hover-primary mb-1">' . htmlspecialchars($row['name'] ?? 'N/A') . '</a>
                 <span class="text-muted fs-7">' . htmlspecialchars($row['email'] ?? '') . '</span>
             </div></div>',
 

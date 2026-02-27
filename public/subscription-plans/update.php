@@ -196,6 +196,20 @@ $plan = fetchPlan($_GET['id']);
                     </div>
                 </div>
 
+                <!-- Custom Domain Toggle -->
+                <div class="col-sm-6 mb-5">
+                    <label class="form-label">Custom Domain</label>
+                    <div class="d-flex align-items-center">
+                        <div class="form-check form-switch form-check-custom form-check-solid">
+                            <input class="form-check-input" type="checkbox" id="custom_domain" name="custom_domain" value="1" <?= ($plan->custom_domain ?? 0) ? 'checked' : '' ?> />
+                            <label class="form-check-label" for="custom_domain">
+                                Enable Custom Domain
+                            </label>
+                        </div>
+                    </div>
+                    
+                </div>
+
                 <div class="col-sm-12 mb-5">
                     <label class="required form-label">GST Type</label>
 

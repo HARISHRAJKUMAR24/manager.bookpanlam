@@ -2433,3 +2433,131 @@ function getRecentTransactions($pdo, $limit = 10)
         return [];
     }
 }
+
+//============================================================================//
+// ==================== Check if user's plan has custom domain enabledS =========================//
+
+function canUserAccessCustomDomain($user_id)
+{
+    $pdo = getDbConnection();
+    
+    try {
+        // Get user's current plan
+        $stmt = $pdo->prepare("
+            SELECT u.plan_id, sp.custom_domain 
+            FROM users u 
+            LEFT JOIN subscription_plans sp ON u.plan_id = sp.id 
+            WHERE u.user_id = ?
+        ");
+        $stmt->execute([$user_id]);
+        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // If user has no plan
+        if (!$user || $user['plan_id'] === null) {
+            return [
+                'can_access' => false,
+                'message' => 'You need to subscribe to a plan to access custom domain feature.',
+                'custom_domain_enabled' => false,
+                'plan_name' => 'No Plan'
+            ];
+        }
+        
+        // Check if custom_domain is enabled (1 = enabled, 0 = disabled)
+        $custom_domain_enabled = (int)($user['custom_domain'] ?? 0);
+        
+        // Get plan name
+        $planStmt = $pdo->prepare("SELECT name FROM subscription_plans WHERE id = ?");
+        $planStmt->execute([$user['plan_id']]);
+        $plan = $planStmt->fetch(PDO::FETCH_ASSOC);
+        $plan_name = $plan['name'] ?? 'Unknown Plan';
+        
+        if ($custom_domain_enabled === 1) {
+            return [
+                'can_access' => true,
+                'message' => 'Your plan supports custom domain.',
+                'custom_domain_enabled' => true,
+                'plan_name' => $plan_name,
+                'plan_id' => $user['plan_id']
+            ];
+        } else {
+            return [
+                'can_access' => false,
+                'message' => 'Your current plan does not support custom domain. Please upgrade to a plan that includes custom domain feature.',
+                'custom_domain_enabled' => false,
+                'plan_name' => $plan_name,
+                'plan_id' => $user['plan_id']
+            ];
+        }
+        
+    } catch (PDOException $e) {
+        error_log("Error in canUserAccessCustomDomain: " . $e->getMessage());
+        return [
+            'can_access' => false,
+            'message' => 'Error checking plan permissions.',
+            'custom_domain_enabled' => false,
+            'plan_name' => 'Error',
+            'error' => $e->getMessage()
+        ];
+    }
+}
+
+// ---------------------- Get all plans that support custom domain ---------------------- //
+function getCustomDomainPlans($pdo)
+{
+    try {
+        $stmt = $pdo->prepare("
+            SELECT id, name, amount, duration, custom_domain 
+            FROM subscription_plans 
+            WHERE custom_domain = 1 AND is_disabled = 0
+            ORDER BY amount ASC
+        ");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (PDOException $e) {
+        error_log("Error in getCustomDomainPlans: " . $e->getMessage());
+        return [];
+    }
+}
+
+
+//============================================================================//
+// ==================== CUSTOM DOMAIN STATISTICS ============================//
+
+/**
+ * Get custom domain statistics
+ */
+function getDomainStats($pdo)
+{
+    try {
+        $sql = "SELECT 
+                    COUNT(*) as total,
+                    SUM(CASE WHEN JSON_EXTRACT(domain_request, '$.status') = 'pending' THEN 1 ELSE 0 END) as pending,
+                    SUM(CASE WHEN JSON_EXTRACT(domain_request, '$.status') = 'active' THEN 1 ELSE 0 END) as active,
+                    SUM(CASE WHEN JSON_EXTRACT(domain_request, '$.status') = 'inactive' THEN 1 ELSE 0 END) as inactive,
+                    SUM(CASE WHEN JSON_EXTRACT(domain_request, '$.status') = 'rejected' THEN 1 ELSE 0 END) as rejected
+                FROM website_settings 
+                WHERE domain_request IS NOT NULL 
+                AND domain_request != 'null' 
+                AND domain_request != ''";
+        
+        $stmt = $pdo->query($sql);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return [
+            'total' => (int)($result['total'] ?? 0),
+            'pending' => (int)($result['pending'] ?? 0),
+            'active' => (int)($result['active'] ?? 0),
+            'inactive' => (int)($result['inactive'] ?? 0),
+            'rejected' => (int)($result['rejected'] ?? 0)
+        ];
+    } catch (Exception $e) {
+        error_log("Error in getDomainStats: " . $e->getMessage());
+        return [
+            'total' => 0,
+            'pending' => 0,
+            'active' => 0,
+            'inactive' => 0,
+            'rejected' => 0
+        ];
+    }
+}

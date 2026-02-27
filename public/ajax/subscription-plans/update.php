@@ -19,7 +19,7 @@ $upi_payment_methods_limit = $_POST['upi_payment_methods_limit'] ?? '';
 $free_credits = $_POST['free_credits'] ?? '';
 $gst_type = $_POST['gst_type'] ?? '';
 $feature_lists = $_POST['feature_lists'] ?? '';
-
+$custom_domain = isset($_POST['custom_domain']) ? 1 : 0;
 $razorpay = isset($_POST['razorpay']) ? 1 : 0;
 $phonepe = isset($_POST['phonepe']) ? 1 : 0;
 $payu = isset($_POST['payu']) ? 1 : 0;
@@ -65,7 +65,8 @@ try {
         $razorpay,
         $phonepe,
         $payu,
-        $gst_type
+        $gst_type,
+        $custom_domain // ✅ ADDED: Custom domain parameter
     );
 
     exit(json_encode(["type" => "success", "msg" => "Plan updated successfully!"]));

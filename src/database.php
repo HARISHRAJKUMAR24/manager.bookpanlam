@@ -56,13 +56,13 @@ function fetchUsers($limit, $offset, $searchValue, $conditions = [])
             WHERE 1=1";
 
     $params = [];
-    
+
     // Handle is_suspended condition
     if (isset($conditions['is_suspended']) && $conditions['is_suspended'] !== '') {
         $sql .= " AND u.is_suspended = :is_suspended";
         $params[':is_suspended'] = $conditions['is_suspended'];
     }
-    
+
     // Handle plan_id condition - including NULL for "No Plan"
     // FIX: Check if it's set and not empty string, but allow "NULL" as a valid value
     if (isset($conditions['plan_id']) && $conditions['plan_id'] !== '') {
@@ -238,17 +238,20 @@ function addPlan(
     $razorpay,
     $phonepe,
     $payu,
-    $gst_type
+    $gst_type,
+    $custom_domain // ✅ ADDED: Custom domain parameter
 ) {
     $pdo = getDbConnection();
     $stmt = $pdo->prepare("INSERT INTO subscription_plans
     (plan_id, name, amount, previous_amount, duration, description, feature_lists, 
      appointments_limit, customers_limit, services_limit, menu_limit, 
-     coupons_limit, manual_payment_methods_limit, upi_payment_methods_limit, free_credits, razorpay, phonepe, payu, gst_type)
+     coupons_limit, manual_payment_methods_limit, upi_payment_methods_limit, free_credits, 
+     razorpay, phonepe, payu, gst_type, custom_domain)
     VALUES
     (:plan_id, :name, :amount, :previous_amount, :duration, :description, :feature_lists, 
      :appointments_limit, :customers_limit, :services_limit, :menu_limit, 
-     :coupons_limit, :manual_payment_methods_limit, :free_credits, :razorpay, :phonepe, :payu, :gst_type)");
+     :coupons_limit, :manual_payment_methods_limit, :upi_payment_methods_limit, :free_credits,
+     :razorpay, :phonepe, :payu, :gst_type, :custom_domain)");
 
     $stmt->execute([
         'plan_id' => uuid(),
@@ -269,7 +272,8 @@ function addPlan(
         'razorpay' => $razorpay,
         'phonepe' => $phonepe,
         'payu' => $payu,
-        'gst_type' => $gst_type
+        'gst_type' => $gst_type,
+        'custom_domain' => $custom_domain
     ]);
 }
 
@@ -292,7 +296,8 @@ function updatePlan(
     $razorpay,
     $phonepe,
     $payu,
-    $gst_type
+    $gst_type,
+    $custom_domain // ✅ ADDED: Custom domain parameter
 ) {
     $pdo = getDbConnection();
     $stmt = $pdo->prepare("UPDATE subscription_plans SET 
@@ -313,7 +318,8 @@ function updatePlan(
         razorpay = :razorpay,
         phonepe = :phonepe,
         payu = :payu,
-        gst_type = :gst_type
+        gst_type = :gst_type,
+        custom_domain = :custom_domain
     WHERE plan_id = :plan_id");
 
     $stmt->execute([
@@ -335,7 +341,8 @@ function updatePlan(
         'razorpay' => $razorpay,
         'phonepe' => $phonepe,
         'payu' => $payu,
-        'gst_type' => $gst_type
+        'gst_type' => $gst_type,
+        'custom_domain' => $custom_domain
     ]);
 }
 
